@@ -8,7 +8,7 @@ By Arnon Benshahar
 
 ---
 
-## GENRAL USAGE NOTES
+## General Usage 
 
 ---
 
