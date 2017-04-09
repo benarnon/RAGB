@@ -1,20 +1,23 @@
-# RAGBI Monitor Program 09/04/2017
+# RAGBI Program, 09/04/2017
 
 **Version 1.0.0** 
 
 By Arnon Benshahar
 
-
-
 ---
-
-## General Usage 
 
 ---
 
 
 ## Running Details
+In order to run RAGBI you need:
 
+Python 2.7 or later
+Blast
+
+The easiest way to run the project is to execute the script named 'main.py'. The defaults that are provided are sufficient to run the project with the inputs provided.
+
+./main.py -h usage: main.py [-q FOLDER] [-g FOLDER] [-o FOLDER] [-d INT] [-n INT] [-iv STRING] [-min_genomes INT] [-min_genes INT] [-rank INT] [-parse STRING] [-e FLOAT]
 ---
 
 ## Contact

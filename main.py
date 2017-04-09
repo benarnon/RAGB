@@ -49,6 +49,8 @@ def parser_code():
     parser.add_argument("-parse", "--parse_input", dest="parse_input", metavar="STRING", default='T',
                         help="Parse the input files")
 
+    parser.add_argument("-e", "--e-val", dest="e-value", metavar="FLOAT", default='0.01',
+                        help="eval for the BLAST search.")
     return parser.parse_args()
 
 def check_options(parsed_args):
