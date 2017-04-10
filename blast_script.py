@@ -8,9 +8,6 @@ import sys
 import argparse
 from Bio.Blast.Applications import NcbiblastxCommandline
 
-# Copyright(C) 2014 David Ream
-# Released under GPL version 3 licence. http://www.gnu.org/licenses/lgpl.html
-# Do not remove this comment
 
 #this function will return all of the files that are in a directory. os.walk is recursive traversal.
 def returnRecursiveDirFiles(root_dir):
@@ -23,20 +20,13 @@ def returnRecursiveDirFiles(root_dir):
     return result
 
 
-# This code right now only deals with protein, but I will add functionality later for nucleotides. 
-# Just moving the project along here, but this is a critical flaw moving forward.
 def do_parallel_blast(arg_tuple):
     db, query_file, blast_result_folder, num_processors, eval_threshold = arg_tuple
     if (db.split('/')[-1] != query_file.split('/')[-1]):
         out_file = "%s%s.txt" % (blast_result_folder, db.split('/')[-1].split('.')[0])
-        #print "db", db
-        #print "got here"
-        #cmd = "blastall -p tblastn -a %i -i %s -d %s -e %s -o %s -m 9" % (num_processors, query_file, db, eval_threshold, out_file)
-        #cmd = "blastall -p tbla   stn -a %i -i %s -d %s -e %s -o %s -m 9" % (1, query_file, db, eval_threshold, out_file)
-        #cmd = "blastall -p blastp -a %i -i %s -d %s -e %s -o %s -m 9" % (1, query_file, db, eval_threshold, out_file)
         print "before blast query file: " + query_file + ", db:" + db
-        cmd = "blastall -p blastp -a %i -i %s -d %s -e %s -o %s -m 8" % (1, query_file, db, 0.01, out_file)
-        #print cmd
+        #cmd = "blastall -p blastp -a %i -i %s -d %s -e %s -o %s -m 8" % (1, query_file, db, 0.01, out_file)
+        cmd = "blastp -query %s -db %s -evalue %s -out %s -outfmt 6" % (query_file, db, 0.01, out_file)
         os.system( cmd )
         print "finish  blast on query file: " + query_file + ", db:" + db
 
@@ -60,9 +50,6 @@ def parallel_blast(database_folder, outfolder, filter_file, num_proc, query_file
             #elif os.path.isdir(file_path): shutil.rmtree(file_path)
         except Exception as e:
             print(e)
-
-    # you kinda have to trust me here, but having blast run on as many threads per CPU as you have total processors is fastest
-    # I have no idea why this is... ugh.
     
     unfiltered_db_list = [i for i in returnRecursiveDirFiles(database_folder) if i.split('/')[-1].split('.')[-1] == 'ffc']
 
@@ -71,10 +58,7 @@ def parallel_blast(database_folder, outfolder, filter_file, num_proc, query_file
     else:
         filter_list = [i.strip() for i in open(filter_file).readlines()]
         db_list = [i for i in unfiltered_db_list if i.split('/')[-1].split('.')[0] in filter_list]
-    
-    #print len(unfiltered_db_list), len(db_list)
-    
-    #blast_arg_list = [(i, query_file, outfolder, num_proc, e_val) for i in db_list]
+
     blast_arg_list = [(i, query_file, outfolder, 1, e_val) for i in db_list]
     pool = Pool(processes = num_proc)
     pool.map(do_parallel_blast, blast_arg_list)

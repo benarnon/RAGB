@@ -18,40 +18,43 @@ def parser_code():
     parser = argparse.ArgumentParser(
         description='The purpose of this script is to run the full software suite that we have developed to study gene clusters.')
 
-    parser.add_argument("-q", "--qfolder", dest="qfolder", metavar="DIRECTORY", default='./res/IslandViewerPAI/',
+    parser.add_argument("-q", "--qfolder", dest="qfolder", metavar="DIRECTORY", default='./data/res/IslandViewerPAI/',
                         help="Folder containing the fasta and Island Viewer format files of the centroid query.")
 
-    parser.add_argument("-g", "--dbfolder", dest="dbfolder", metavar="DIRECTORY", default='./res/genomes/',
+    parser.add_argument("-g", "--dbfolder", dest="dbfolder", metavar="DIRECTORY", default='./data/res/genomes/',
                         help="Folder containing all genbank files for use by the program.")
 
     parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./OUT/',
                         help="Folder where the results of a run will be stored.")
 
     parser.add_argument("-d", "--window", dest="window_size", metavar="INT", default=15,
-                        help="Folder where the results of a run will be stored.")
+                        help="Size of the window")
 
     parser.add_argument("-n", "--num_proc", dest="num_proc", metavar="INT", default=os.sysconf("SC_NPROCESSORS_CONF"),
                         type=int,
                         help="Number of processors that you want this script to run on. The default is every CPU that the system has.")
 
     parser.add_argument("-iv", "--island_viewer_format", dest="island_viewer_format", metavar="STRING", default='T',
-                        help="IslandViewer queries format, T for islandviewer format and F for normal gbk file")
+                        help="IslandViewer queries format, T for islandviewer format and F for normal gbk file.")
 
-    parser.add_argument("-min_genomes", "--min_genomes_per_block", dest="min_genomes_per_block", metavar="INT", default=5,
+    parser.add_argument("-min_genomes", "--min_genomes_per_block", dest="min_genomes_per_block", metavar="INT",
+                        default=5,
                         help="Minimum genome in a gene-block.")
 
-    parser.add_argument("-min_genes", "--min_genes_per_interval", dest="min_genes_per_interval", metavar="INT", default=5,
+    parser.add_argument("-min_genes", "--min_genes_per_interval", dest="min_genes_per_interval", metavar="INT",
+                        default=5,
                         help="Minimum genes in a gene interval.")
 
     parser.add_argument("-rank", "--min_rank", dest="min_rank", metavar="INT", default=20,
                         help="Minimum ranking score that will be report")
 
-    parser.add_argument("-parse", "--parse_input", dest="parse_input", metavar="STRING", default='T',
+    parser.add_argument("-parse", "--parse_input", dest="parse_input", metavar="STRING", default='F',
                         help="Parse the input files")
 
     parser.add_argument("-e", "--e-val", dest="e-value", metavar="FLOAT", default='0.01',
                         help="eval for the BLAST search.")
     return parser.parse_args()
+
 
 def check_options(parsed_args):
     if os.path.isdir(parsed_args.dbfolder):
@@ -96,7 +99,7 @@ def check_options(parsed_args):
 
     # validate the query input format (isalndviewer or gbk)
     if parsed_args.island_viewer_format == 'F' or parsed_args.island_viewer_format == 'T':
-        island_viewer_format  = (parsed_args.island_viewer_format =='T')
+        island_viewer_format = (parsed_args.island_viewer_format == 'T')
     else:
         print "T for isalndviewer format and F for normal gbk file"
         sys.exit()
@@ -139,7 +142,7 @@ def check_options(parsed_args):
 
     # validate the query input format (isalndviewer or gbk)
     if parsed_args.parse_input == 'F' or parsed_args.parse_input == 'T':
-        parse_input= (parsed_args.parse_input == 'T')
+        parse_input = (parsed_args.parse_input == 'T')
     else:
         print "T for isalndviewer format and F for normal gbk file"
         sys.exit()
@@ -147,9 +150,8 @@ def check_options(parsed_args):
     return dbfolder, qfolder, outfolder, num_proc, window_size, island_viewer_format, island_viewer_format, min_genomes_per_block, parse_input
 
 
-
 def parse_cmd():
-    return "./res/High-Throughput-Plamids/" , "./res/genomes/", "1e-50"
+    return "./res/High-Throughput-Plamids/", "./res/genomes/", "1e-50"
     # return "./res/High-Throughput-Plamids/", "./res/genomes/", "1e-50"
 
 
@@ -175,24 +177,25 @@ def parallel_high_throughput_test(tuple_list_array):
 
 
 def main():
-    print 'Start main'
-    parsed_args = parser_code()
-
-    db_folder, q_folder, outfolder, num_proc, window_size, island_viewer_format, island_viewer_format, min_genomes_per_block, parse_input = check_options(parsed_args)
-
-    #only for high_throughput
-    high_throughput = False
     start = time.time()
 
-    # parsed_args = parser_code()
+    print 'Start main'
 
-    # this json will contain all the stats about this run
+    # Parse all the user's arguments
+
+    parsed_args = parser_code()
+    db_folder, q_folder, outfolder, num_proc, window_size, island_viewer_format, island_viewer_format, min_genomes_per_block, parse_input = check_options(
+        parsed_args)
+
+    # Only for high_throughput
+    high_throughput = False
+
+    # This json will contain all the information about this run.
     stats_json = {'query_list': []}
 
     tmp_dir = './TMP'
     ref_fasta_dir = tmp_dir + '/ffc/ref/'
-    # query_fasta_dir = tmp_dir + '/ffc/qry/'/'
-    query_fasta_dir = tmp_dir + '/ffc/qryheavy/'
+    query_fasta_dir = tmp_dir + '/ffc/qry/'
 
     if parse_input:
         if os.path.exists(outfolder):
@@ -211,13 +214,18 @@ def main():
             shutil.rmtree(query_fasta_dir)
         os.makedirs(query_fasta_dir)
 
-        # Stage 1: conver gbk files of the query into fasta format and the reference to ffc format.
+        '''
+        Stage 1: Convert the gbk files of the query and the reference to ffc format.
+        In case the query is in normal gbk format (one file, one island) we convert the gbk file into one ffc file which contains the island.
+        In case the query is in Islandviewer format we split each genebank file into multiple ffc files where each file contains one island.
+        For more details about the input formats please go to the README.md file.
+        '''
 
         if island_viewer_format:
             query_json = ParseGbk.parseIslandViewer(q_folder, query_fasta_dir)
 
         else:
-            query_json = ParseGbk.parse(q_folder, query_fasta_dir, "NONE", True,False)
+            query_json = ParseGbk.parse(q_folder, query_fasta_dir, "NONE", True, False)
 
         target_json = ParseGbk.parse(db_folder, ref_fasta_dir, "NONE", True, True)
 
@@ -230,7 +238,7 @@ def main():
     else:
         print 'Run biclustering'
         # create the queries file
-        blast_results_dir = tmp_dir + '/blast_results-HEAVY/'
+        blast_results_dir = tmp_dir + '/blast_results/'
         if os.path.exists(blast_results_dir):
             shutil.rmtree(blast_results_dir)
         os.makedirs(blast_results_dir)
@@ -288,21 +296,21 @@ def main():
                 query_gene_list_dir) + "\n" + outfolder
             tuple_list = (file, db_folder, ref_fasta_dir, query_fasta_dir, blast_results_tmp, e_val, blast_parse_tmp,
                           query_gene_list_dir, bicluster_results_tmp, genome_size)
-            # file_stats = biclustering(tuple_list, high_throughput)
-            # if not high_throughput:
-            #     file_stats['accession'] = query_file_name
-            #     with open(outfolder + 'queries.json') as data_file:
-            #         query_json = json.load(data_file)
-            #     for query in query_json:
-            #         if query['accession'] == query_file_name:
-            #             file_stats['length'] = query['length']
-            #             file_stats['number_of_genes'] = query['number_of_genes']
-            #     if file_stats['num_of_cliques'] > 0:
-            #         general_stats.append(file_stats)
-            #         with open(outfolder + 'resultStats.json', 'w') as outfile1:
-            #             json.dump(general_stats, outfile1)
-            # else:
-            #     tuple_list_array.append((query_gene_list_dir + file.split("/")[-1].split(".")[0] + ".txt", blast_parse_tmp, './', db_folder))
+            file_stats = biclustering(tuple_list, high_throughput)
+            if not high_throughput:
+                 file_stats['accession'] = query_file_name
+                 with open(outfolder + 'queries.json') as data_file:
+                     query_json = json.load(data_file)
+                 for query in query_json:
+                     if query['accession'] == query_file_name:
+                         file_stats['length'] = query['length']
+                         file_stats['number_of_genes'] = query['number_of_genes']
+                 if file_stats['num_of_cliques'] > 0:
+                     general_stats.append(file_stats)
+                     with open(outfolder + 'resultStats.json', 'w') as outfile1:
+                         json.dump(general_stats, outfile1)
+            else:
+                 tuple_list_array.append((query_gene_list_dir + file.split("/")[-1].split(".")[0] + ".txt", blast_parse_tmp, './', db_folder))
 
         if island_viewer_format:
             print "high_throughput_test"
