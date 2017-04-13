@@ -8,7 +8,7 @@
 # Copyright(C) 2014 David Ream
 # Released under GPL version 3 licence. http://www.gnu.org/licenses/lgpl.html
 # Do not remove this comment
-
+import logging
 
 class Homolog:
     """This is a class that will hold the values that i wish to store about homologs"""
@@ -78,11 +78,16 @@ class Homolog:
             align_subject_stop, Eval, bits_score = line.strip().split('\t')
             if len(query_line.split("|")) == 11:
                 query_accesssion, query_common, query_locus, query_gene_name, query_gene_id, query_description, query_start, query_end, query_strand, query_gc, query_old_locus = query_line.split('|')
+            elif len(query_line.split("|")) == 9:
+                query_accesssion, query_common, query_gene_name, query_gene_id, query_description, query_start, query_end, query_strand, query_gc = query_line.split('|')
+                query_locus = query_accesssion
             else:
                query_accesssion, query_common, query_locus, query_gene_name, query_gene_id, query_description, query_start, query_end, query_strand, query_gc = query_line.split('|')
             target_accession, target_common, target_locus, target_gene_name, target_description, target_start, target_end, target_strand, target_gc = subject_line.split('|')
             return Homolog(query_accesssion, query_common, query_locus, query_gene_name, query_gene_id, query_description, query_start, query_end, query_strand, query_gc,target_accession, target_common, target_locus, target_gene_name, target_description, target_start, target_end, target_strand, target_gc, percent_ident, aligned_length, number_mismatched, number_gaps, align_query_start, align_query_stop, align_subject_start, align_subject_stop, Eval, bits_score)
-        except:
+        except Exception:
+            logging.error("Error in classmethod from_blast in the Homolog class: " + Exception)
+            logging.error("Error in line: " + line)
             print "Error in classmethod from_blast in the Homolog class."
             print line
 

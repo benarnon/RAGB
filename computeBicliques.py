@@ -4,13 +4,11 @@ import copy
 import os
 import math
 import itertools
-from sets import Set
-from scipy.stats import hypergeom
-
-from sklearn.cluster import DBSCAN
-
 import networkx as nx
 import json
+from sets import Set
+from scipy.stats import hypergeom
+from sklearn.cluster import DBSCAN
 
 MIN_NUM_OF_GENOMES_IN_CLUSTER = 4
 WINDOW_SLIDE_SIZE = 16
@@ -72,7 +70,7 @@ def calculate_subsets(array_length, edges_group):
         tmp_subsets = list(itertools.chain(
             *(list(itertools.combinations(tmp_arr, n)) for n in range(MIN_NUM_OF_GENES_IN_INTERVAL, len(tmp_arr) + 1))))
         total_subsets.append(tmp_subsets)
-    print "Finish subset"
+    logging.info("Finish subset")
     return total_subsets
 
 
@@ -94,7 +92,7 @@ def calculate_log_pval(m,n, d, c, k):
     p = float(float(up) / float(down))
     p = p * (n - d)
     i_prime =  math.floor(float((m+1)*float(p)))
-    # print i_prime
+    # logging.info( i_prime
     if i_prime > m:
         i_prime = m
     elif i_prime < c:
@@ -102,7 +100,7 @@ def calculate_log_pval(m,n, d, c, k):
     if p > 1:
         return -1
     pval = -float(float(math.log10(m-c+1)) + float(math.log10(ncr(m,i_prime))) + float(i_prime*math.log10(p)) + float((m-i_prime)*math.log10(1-p)))
-    # print "m=" + str(m) + " n=" + str(n) + " d=" + str(d) + " c=" + str(c) +  " k=" + str(k) + " m=" + str(m) + " up= " + str(up) + "  down= " + str(down) + " p=" + str(p) + " i_prime=" + str(i_prime) + " pval=" + str(pval)
+    # logging.info( "m=" + str(m) + " n=" + str(n) + " d=" + str(d) + " c=" + str(c) +  " k=" + str(k) + " m=" + str(m) + " up= " + str(up) + "  down= " + str(down) + " p=" + str(p) + " i_prime=" + str(i_prime) + " pval=" + str(pval)
     return pval
 
 
@@ -385,10 +383,10 @@ class BiPartiteGrpah(object):
         total_subsets = calculate_subsets(len(self.A) + 1, self.E)
         for indexes_subsets in total_subsets:
             round = 1
-            # print "Round " + str(round) + " Number of subsets: " + str(len(indexes_subsets))
+            # logging.info( "Round " + str(round) + " Number of subsets: " + str(len(indexes_subsets))
             round += 1
             for subset in indexes_subsets:
-                # print str(subset)
+                # logging.info( str(subset)
                 # Check if the subset is a biclique
                 if subset != () and subset[0] in self.get_edges():
                     b_prime = copy.deepcopy(self.get_edges()[subset[0]])
@@ -411,7 +409,7 @@ class BiPartiteGrpah(object):
                             self.bic_results.append(biclique)
                             aGroups.append(biclique.get_a())
 
-        print "Finish to calculate bicliques"
+        logging.info("Finish to calculate bicliques")
 
     # Check for each biclique in the results array:
     # If it contains the new biclique (smaller or equal): return 0 else return 1
@@ -441,7 +439,7 @@ class BiPartiteGrpah(object):
             for b in bic.B:
                 interval = []
                 direction_interval = []
-                # print self.B[b]
+                # logging.info( self.B[b]
                 taxonomies.append(self.B[b].taxonomy)
                 for gene in self.B[b].genes:
                     interval.append(gene.name)
@@ -571,13 +569,13 @@ class BlockGraph(object):
         self.super_cliques = []
 
     def init_block_graph(self, bip_graph, filter_context_switch):
-        print "Init block graph "
+        logging.info( "Init block graph " )
         i = 0
         for bic in bip_graph.bic_results:
             add_block = True
             if filter_context_switch:
                 add_block = check_context_switch(bic, bip_graph)
-            print add_block
+            # logging.info( add_block
             if add_block:
                 self.blocksGraph.add_node(i)
                 self.blocksGraph[i]['A'] = bic.get_a()
@@ -623,7 +621,7 @@ class BlockGraph(object):
                     cliques_graph.add_edge(i, j)
         # Finding cliques of cliques
         self.super_cliques = list(nx.find_cliques(cliques_graph))
-        # print self.super_cliques
+        # logging.info( self.super_cliques
 
         # From each clique of cliques we pick the best clique
         for superClique in self.super_cliques:
@@ -648,15 +646,11 @@ class BlockGraph(object):
             org_to_index[bip_graph.color_to_organims[i]] = i
         with open(outfile + '_target.json', 'w') as outfile1:
             json.dump(data_target, outfile1)
-
-        print "query"
         data_query = {'A': []}
         for a in bip_graph.A:
             data_query['A'].append(a.to_json())
         with open(outfile + '_query.json', 'w') as outfile2:
             json.dump(data_query, outfile2)
-
-        print "blocks"
         data_blocks = {'Minimum_Number_Genomes_In_Bicluster': str(MIN_NUM_OF_GENOMES_IN_CLUSTER + 1),
                        'Minimum_Number_Genes_Interval': str(MIN_NUM_OF_GENES_IN_INTERVAL + 1),
                        'Window_Size': str(WINDOW_SLIDE_SIZE), 'Genes_Gap': str(GENES_GAP),
@@ -674,7 +668,7 @@ class BlockGraph(object):
                 data_blocks['Cliques'][i]['Metadata'] = clique
                 data_blocks['Cliques'][i]['Blocks'] = []
                 for node in clique:
-                    # print  self.blocksGraph[node]['hyperGeoArray']
+                    # logging.info(  self.blocksGraph[node]['hyperGeoArray']
                     data_blocks['Cliques'][i]['Blocks'].append(
                         bip_graph.bic_results[node].to_json(bip_graph, org_to_index,
                                                             self.blocksGraph[node]['hyperGeoArray']))
@@ -748,14 +742,14 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
     logging.info("Construct B")
     for fname in fname_list:
         strain_id = (fname.split("/")[-1]).split(".")[0]
-        # print bipartite_graph.strain_to_organism
+        # logging.info( bipartite_graph.strain_to_organism
         organism = bipartite_graph.strain_to_organism[strain_id]
         color = bipartite_graph.organism_to_color[organism]
         geneInterval = GeneInterval(strain_id, color, interval_id)
         lastGene = Gene(-1, '', '', -1000, -1000, 1, '', '', '', 0)
         lastEval = 100000
         bipartite_graph.strain_to_length[strain_id] = len([i.strip() for i in open(fname).readlines()])
-        # print "Num of genes in genome " + str(organism) + " in strain " + str(strain_id) + " is: " + str(
+        # logging.info( "Num of genes in genome " + str(organism) + " in strain " + str(strain_id) + " is: " + str(
         #     len([i.strip() for i in open(fname).readlines()]))
         for line in [i.strip() for i in open(fname).readlines()]:
             if line != "":
@@ -794,7 +788,7 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
                 bipartite_graph.add_edge(genes_dict[geneI.name], interval_id)
             interval_id += 1
         color += 1
-    print "Created bipartite graph with A= " + str(len(bipartite_graph.get_a())) + " B=" + str(len(bipartite_graph.get_b())) + " E=" + str(len(bipartite_graph.get_edges()))
+    logging.info("Created bipartite graph with A= " + str(len(bipartite_graph.get_a())) + " B=" + str(len(bipartite_graph.get_b())) + " E=" + str(len(bipartite_graph.get_edges())))
     return bipartite_graph
 
 
@@ -811,8 +805,8 @@ def create_run_stats(bipartite_graph, block_graph):
         for block in clique:
             check_double_context_switch_bol |= check_double_context_switch(bipartite_graph.bic_results[block], bipartite_graph)
             check_context_switch_bol |= check_context_switch(bipartite_graph.bic_results[block], bipartite_graph)
-            print 'real\ testy'
-            print check_context_switch_bol
+            # logging.info( 'real\ testy'
+            # logging.info( check_context_switch_bol
             if bipartite_graph.bic_results[block].pval > max_pval:
                 max_pval = bipartite_graph.bic_results[block].pval
                 bol2 = 1
@@ -840,7 +834,6 @@ def create_run_stats(bipartite_graph, block_graph):
 
 def parallel_compute_biclusters_dict(query_file, blast_parse_folder, out_folder, reference_folder):
     logging.info('Compute Biclustering section')
-    print 'Compute Biclustering section'
     bilcuster_out_folder = out_folder
     if not os.path.isdir(bilcuster_out_folder):
         os.makedirs(bilcuster_out_folder)
@@ -860,23 +853,19 @@ def parallel_compute_biclusters_dict(query_file, blast_parse_folder, out_folder,
     # bipartite_graph.parse_results(reference_folder, out_folder, query_file)
     logging.info("Finish create graph where |A|=" + str(len(bipartite_graph.A)) + " and |B|= " + str(
         len(bipartite_graph.A)) + " and |E|=" + str(len(bipartite_graph.E)))
-    print "Finish create graph where |A|=" + str(len(bipartite_graph.A)) + " and |B|= " + str(
-        len(bipartite_graph.A)) + " and |E|=" + str(len(bipartite_graph.E))
     return create_run_stats(bipartite_graph, block_graph)
 
 
 def compute_bicluster(query_file, blast_parse_folder, out_folder, reference_folder,genome_size):
-    print "compute bicliques"
+    logging.info(
+        "Compute Biclusters " + query_file + " " + blast_parse_folder + " " + out_folder + " " + reference_folder)
+    logging.info("Compute bicliques")
     global size_of_genome
-    print "genome size " + str(size_of_genome)
+    logging.info("Genome size " + str(size_of_genome))
     size_of_genome = genome_size
 
     start = time.time()
-    logging.basicConfig(
-        filename="./" + query_file.split("/")[-1].split(".")[0] + '-info.log', level=logging.DEBUG)
-    logging.info(
-        "Compute Biclusters " + query_file + " " + blast_parse_folder + " " + out_folder + " " + reference_folder)
     stats_json = parallel_compute_biclusters_dict(query_file, blast_parse_folder, out_folder, reference_folder)
 
-    logging.info(time.time() - start)
+    logging.info(str(time.time() - start))
     return stats_json

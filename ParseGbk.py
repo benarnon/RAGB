@@ -9,6 +9,7 @@ from Bio.SeqUtils import GC
 from Bio.SeqRecord import SeqRecord
 import uniprot as uni
 import csv
+import logging
 
 __author__ = 'Arnon Benshahar'
 
@@ -70,7 +71,7 @@ def convert_island_viewer(genbank_path, csv_path, db_directory):
                         island_list[str(start + '-' + end)]['genes'].append(gene_id.replace('_', ''))
                         island_list[str(start + '-' + end)]['loci'].append(locus.replace('_', ''))
         # parse the gbk file
-
+        logging.info(genbank_path)
         print '\n' +  genbank_path
 
         tmp = ''
@@ -216,6 +217,7 @@ def convert_genbank(genbank_tuple, create_tax):
     accession_to_taxonomy = {}
     for tup in genbank_tuple:
         query = {}
+        logging.info("Parsing tuple " + str(tup))
         print "Parsing tuple " + str(tup)
         genbank_path, db_directory, error_fname, do_protein = tup
         record_list = []
@@ -296,26 +298,24 @@ def convert_genbank(genbank_tuple, create_tax):
                         else:
                             pass
                             # print "This was not a protein sequence"
-                    except:
-                        print "no idea"
+                    except Exception:
+                        err_log.append(Exception)
                 else:
                     # put something in here that will deal with RNA later, if we plan to go that route.
                     pass
                 if not error_in_field:
                     record_list.append(seq_rec_to_store)
                 else:
-                    print "a record was omitted"
+                    logging.info("A record was omitted")
         query['number_of_genes'] = num_of_cds
         query_json.append(query)
         # if os.path.isfile(gc_outfile):
         #    os.remove(gc_outfile)
         # GCAnalysis(accession, organism, gc_list, seq_record.seq, gc_outfile)
-        handle = open(error_fname, 'a')
         for i in err_log:
             print str(i)
             print i
-            handle.write('\t'.join(i) + '\n')
-        handle.close()
+            logging.error('Error:' + i)
         if not err_flag:
             outpath = db_directory + os.path.splitext(os.path.basename(genbank_path))[0] + '.ffc'
             # print outpath
@@ -323,12 +323,13 @@ def convert_genbank(genbank_tuple, create_tax):
             SeqIO.write(record_list, out_handle, "fasta")
             out_handle.close()
         if do_protein:
-            cmd = "formatdb -i %s -p T -o F" % outpath
+            cmd = "makeblastdb -in %s -dbtype prot" % outpath
         else:
-            cmd = "formatdb -i %s -p F -o F" % outpath
+            cmd = "makeblastdb -in %s -dbtype nucl" % outpath
         os.system(cmd)
         # print "Passed main loop"
     print "ACCESSION TO TAXONOMY"
+    logging.info("ACCESSION TO TAXONOMY")
     if create_tax:
         with open('./TMP/taxonomy.json', 'w') as outfile1:
             json.dump(accession_to_taxonomy, outfile1)

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from multiprocessing import Pool
+import logging
 import time
 import os
 import os, shutil
@@ -24,31 +25,32 @@ def do_parallel_blast(arg_tuple):
     db, query_file, blast_result_folder, num_processors, eval_threshold = arg_tuple
     if (db.split('/')[-1] != query_file.split('/')[-1]):
         out_file = "%s%s.txt" % (blast_result_folder, db.split('/')[-1].split('.')[0])
-        print "before blast query file: " + query_file + ", db:" + db
+        print "Before blast query file: " + query_file + ", db:" + db
+        logging.info("Before blast query file: " + query_file + ", db:" + db)
         #cmd = "blastall -p blastp -a %i -i %s -d %s -e %s -o %s -m 8" % (1, query_file, db, 0.01, out_file)
         cmd = "blastp -query %s -db %s -evalue %s -out %s -outfmt 6" % (query_file, db, 0.01, out_file)
         os.system( cmd )
-        print "finish  blast on query file: " + query_file + ", db:" + db
+        print "Finish  blast on query file: " + query_file + ", db:" + db
+        logging.info("Finish  blast on query file: " + query_file + ", db:" + db)
 
 
 #def parallel_blast(infile, query, folder, num_proc, e_val = '1e-10'):
 def parallel_blast(database_folder, outfolder, filter_file, num_proc, query_file, e_val):
     #Delete all the current files in out folder
     import os, shutil
-
-    print 'parallerl lbast'
+    logging.info('Parallerl blast')
+    print 'Parallerl blast'
     print query_file
     folder = outfolder
     print folder
     for the_file in os.listdir(folder):
-        print "THE FILE"
-        print the_file
         file_path = os.path.join(folder, the_file)
         try:
             if os.path.isfile(file_path):
                 os.unlink(file_path)
             #elif os.path.isdir(file_path): shutil.rmtree(file_path)
         except Exception as e:
+            logging.info(Exception)
             print(e)
     
     unfiltered_db_list = [i for i in returnRecursiveDirFiles(database_folder) if i.split('/')[-1].split('.')[-1] == 'ffc']

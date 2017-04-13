@@ -2,6 +2,7 @@
 
 from multiprocessing import Pool
 import time
+import logging
 import os
 from homolog import *
 from Bio import SeqIO
@@ -27,15 +28,19 @@ def createGeneListFile(query_file, geneListFileName):
     for line in [i.strip() for i in open(query_file).readlines()]:
         # print line
         if line[0] == '>':
-            # Normal format accession, organism, locus, gene, product, note, str(start), str(stop), str(strand)
-            print line
-
-            if len(line.split('|')) == 11:
-                a, b, c, gene_name, gene_id, gene_attribute, gene_start, gene_end, gene_strand, d, old_locus = line.split("|")
-            else:
-                a, b, c, gene_name, gene_id, gene_attribute, gene_start, gene_end, gene_strand, d = line.split("|")
-            handle2.write(
-                gene_name + "\t" + gene_id + "\t" + gene_start + "\t" + gene_end + "\t" + gene_attribute + "\t" + gene_strand + "\n")
+            try:
+                # Normal format accession, organism, locus, gene, product, note, str(start), str(stop), str(strand)
+                if len(line.split('|')) == 11:
+                    a, b, c, gene_name, gene_id, gene_attribute, gene_start, gene_end, gene_strand, d, old_locus = line.split("|")
+                elif len(line.split('|')) == 9:
+                    a, b, gene_name, gene_id, gene_attribute, gene_start, gene_end, gene_strand, d = line.split("|")
+                else:
+                    a, b, c, gene_name, gene_id, gene_attribute, gene_start, gene_end, gene_strand, d = line.split("|")
+                handle2.write(
+                    gene_name + "\t" + gene_id + "\t" + gene_start + "\t" + gene_end + "\t" + gene_attribute + "\t" + gene_strand + "\n")
+            except Exception:
+                logging.error("Error in classmethod createGeneListFile in blast_parse class: " + Exception)
+                print "Error in classmethod createGeneListFile in blast_parse class"
     handle2.close()
 
 
@@ -72,7 +77,9 @@ def parallel_blast_parse_dict(in_folder, out_folder, filter_file):
                     # print line
                     hlog = Homolog.from_blast(line)
                     homoList.append(hlog)
-            except:
+            except Exception:
+                logging.error("Error in line " + line)
+                logging.error("Error in classmethod parallel_blast_parse_dict in blast_parse class: " + Exception)
                 print "ERROR", line
             # hlog.Print()
 
@@ -164,6 +171,7 @@ def parse_blast(infolder, outfolder, filter_file, num_proc, query_gene_list, que
         except Exception as e:
             print(e)
     print "Blast parse " + infolder, outfolder, filter_file, num_proc, query_gene_list, query_fasta_file
+    logging.info("Blast parse " + str(infolder) + "," + str(outfolder) + "," + str(filter_file) + "," + str(num_proc) + "," + str(query_gene_list) + "," + str(query_fasta_file))
     createGeneListFile(query_fasta_file, query_gene_list)
 
     print infolder, outfolder, filter_file, num_proc
