@@ -42,7 +42,7 @@ Example: inside ```/db``` there is ```/db/specie1``` folder which contains ```sp
 **Example**:  inside ```/query/specie1``` there are two files: ```speice1.gbk``` and ```specie1.csv```
         - ```speice1.gbk``` includes all the genes in specie1 
         - ```specie1.csv```contains the information of all the islands that were predicted in *specie1*.
-    2. ***Genebank format (gbk)***: the folder contains the gbk files of all the centroid queries.
+    2.  **Genebank format (gbk)** : the folder contains the gbk files of all the centroid queries.
 
 ## Results Format
 ---

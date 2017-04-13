@@ -6,6 +6,7 @@ import math
 import itertools
 import networkx as nx
 import json
+import csv
 from sets import Set
 from scipy.stats import hypergeom
 from sklearn.cluster import DBSCAN
@@ -647,10 +648,17 @@ class BlockGraph(object):
         with open(outfile + '_target.json', 'w') as outfile1:
             json.dump(data_target, outfile1)
         data_query = {'A': []}
+        gene_name_to_number = {}
         for a in bip_graph.A:
+            gene_name_to_number[a.to_json()['name']] = a.to_json()['id']
             data_query['A'].append(a.to_json())
         with open(outfile + '_query.json', 'w') as outfile2:
             json.dump(data_query, outfile2)
+        with open(outfile + '_query_csv_file.csv','w') as query_csv_file:
+            query_csv_writer = csv.writer(query_csv_file)
+            query_csv_writer.writerow(['Number','Start','End','Gene Id','Gene Name','Attribute','Strand'])
+            for query_gene in data_query['A']:
+                query_csv_writer.writerow([query_gene['id']+1,query_gene['start'],query_gene['stop'],query_gene['gene_id'],query_gene['name'],query_gene['attribute'],query_gene['strand']])
         data_blocks = {'Minimum_Number_Genomes_In_Bicluster': str(MIN_NUM_OF_GENOMES_IN_CLUSTER + 1),
                        'Minimum_Number_Genes_Interval': str(MIN_NUM_OF_GENES_IN_INTERVAL + 1),
                        'Window_Size': str(WINDOW_SLIDE_SIZE), 'Genes_Gap': str(GENES_GAP),
@@ -676,7 +684,29 @@ class BlockGraph(object):
         with open(outfile + '.json', 'w') as outfile3:
             json.dump(data_blocks, outfile3)
 
-
+        with open(outfile + '_csv_file.csv','w') as results_csv_file:
+            results_csv_writer = csv.writer(results_csv_file)
+            for clique in data_blocks['Cliques']:
+                results_csv_writer.writerow(['Clique Number',str(clique['id']+1)])
+                block_index = 1
+                for block in clique['Blocks']:
+                    results_csv_writer.writerow([' '])
+                    results_csv_writer.writerow(['Block Number',block_index, 'Ranking Score',block['pvalue'],'Number of Genes from the Query genome',str(len(block['A'])),'Number of Intervals from the Target genomes',str(len(block['B']))])
+                    block_index += 1
+                    results_csv_writer.writerow([' '])
+                    results_csv_writer.writerow(['Group A'])
+                    results_csv_writer.writerow(['Gene Number','Start','End','Gene Id','Gene Name','Attribute','Strand'])
+                    for gene in block['A']:
+                        results_csv_writer.writerow([gene['id']+1,gene['start'],gene['stop'],gene['gene_id'],gene['name'],gene['attribute'],gene['strand']])
+                    results_csv_writer.writerow([' '])
+                    results_csv_writer.writerow(['Group B'])
+                    for gene_interval in block['B']:
+                        results_csv_writer.writerow([' '])
+                        results_csv_writer.writerow(['Specie',gene_interval['organism'],'Strain',gene_interval['strain'],'Number of Genes',gene_interval['numOfGenes']])
+                        results_csv_writer.writerow(['Gene Number','Start','End','Gene Id','Gene Name','Attribute','Strand','Target Gene Id','Target Gene Attribute','Blast E-value'])
+                        for gene in gene_interval['genes']:
+                            print gene
+                            results_csv_writer.writerow([gene_name_to_number[gene['name']]+1,gene['start'],gene['stop'],gene['gene_id'],gene['name'],gene['attribute'],gene['strand'],gene['target_gene_name'],gene['target_gene_attribute'],gene['eval']])
 # noinspection PyPep8Naming
 def returnRecursiveDirFiles(root_dir):
     result = []
@@ -856,7 +886,7 @@ def parallel_compute_biclusters_dict(query_file, blast_parse_folder, out_folder,
     return create_run_stats(bipartite_graph, block_graph)
 
 
-def compute_bicluster(query_file, blast_parse_folder, out_folder, reference_folder,genome_size):
+def compute_bicluster(query_file, blast_parse_folder, out_folder, reference_folder,genome_size,min_genes_per_interval, min_genomes_per_block,window_size, e_val, min_rank):
     logging.info(
         "Compute Biclusters " + query_file + " " + blast_parse_folder + " " + out_folder + " " + reference_folder)
     logging.info("Compute bicliques")

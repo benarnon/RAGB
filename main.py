@@ -12,6 +12,7 @@ import high_throughput_tests
 import json
 import logging
 import random
+import csv
 
 __author__ = 'Arnon Benshahar'
 
@@ -149,7 +150,9 @@ def check_options(parsed_args):
         logging.info( "T for isalndviewer format and F for normal gbk file")
         sys.exit()
 
-    return dbfolder, qfolder, outfolder, num_proc, window_size, island_viewer_format, min_genes_per_interval, min_genomes_per_block, parse_input
+    e_val = parsed_args.eval
+
+    return dbfolder, qfolder, outfolder, num_proc, window_size, island_viewer_format, min_genes_per_interval, min_genomes_per_block, parse_input, min_rank, e_val
 
 
 def parse_cmd():
@@ -157,19 +160,17 @@ def parse_cmd():
     # return "./res/High-Throughput-Plamids/", "./res/genomes/", "1e-50"
 
 
-def biclustering(tuple_list, high_throughput):
+def biclustering(tuple_list):
     logging.info( 'Start Biclustering')
     logging.info( str(tuple_list))
-    query_file, refernce_folder, ref_fasta, query_fasta, blast_results, e_val, blast_parse_dir, query_gene_list_dir, bicluster_results, max_genome_size = tuple_list
+    query_file, refernce_folder, ref_fasta, query_fasta, blast_results, blast_parse_dir, query_gene_list_dir, bicluster_results, max_genome_size, min_genes_per_interval, min_genomes_per_block,window_size, e_val, min_rank = tuple_list
 
     logging.info( "Stage 3 parse blast results")
     list_file_name = query_gene_list_dir + query_file.split("/")[-1].split(".")[0] + ".txt"
     blast_parse.parse_blast(blast_results, blast_parse_dir, "", 10, list_file_name, query_file)
 
     logging.info( "Stage 4 biclustering")
-    if not high_throughput:
-        return computeBicliques.compute_bicluster(list_file_name, blast_parse_dir, bicluster_results, refernce_folder,
-                                                  max_genome_size)
+    return computeBicliques.compute_bicluster(list_file_name, blast_parse_dir, bicluster_results, refernce_folder, max_genome_size, min_genes_per_interval, min_genomes_per_block,window_size, e_val, min_rank)
 
 
 def parallel_high_throughput_test(tuple_list_array):
@@ -184,7 +185,7 @@ def main():
     logging.info( "Start RAGBI program")
     # Parse all the user's arguments
     parsed_args = parser_code()
-    db_folder, q_folder, outfolder, num_proc, window_size, island_viewer_format, min_genes_per_interval, min_genomes_per_block, parse_input = check_options(
+    db_folder, q_folder, outfolder, num_proc, window_size, island_viewer_format, min_genes_per_interval, min_genomes_per_block, parse_input, min_rank, e_val = check_options(
         parsed_args)
     logging.info( "args=" + str(check_options(parsed_args)))
 
@@ -225,7 +226,6 @@ def main():
         In case the query is in Islandviewer format we split each genebank file into multiple ffc files where each file contains one island.
         For more details about the input formats please go to the README.md file.
         '''
-
         if island_viewer_format:
             logging.info("Parse query in IslandViewer format," + query_fasta_dir)
             query_json = ParseGbk.parseIslandViewer(q_folder, query_fasta_dir)
@@ -233,13 +233,29 @@ def main():
             logging.info("Parse query in noraml format," + query_fasta_dir)
             query_json = ParseGbk.parse(q_folder, query_fasta_dir, "NONE", True, False)
         logging.info("Parse target genomes," + ref_fasta_dir)
-        target_json = ParseGbk.parse(db_folder, ref_fasta_dir, "NONE", True, True)
 
         with open(outfolder + 'queries.json', 'w') as outfile1:
             json.dump(query_json, outfile1)
 
+        with open(outfolder + 'queries_csv_file.csv','w') as queries_csv_file:
+            queries_csv_writer = csv.writer(queries_csv_file)
+            queries_csv_writer.writerow(['Accession Number','Description','Number of islands','Length'])
+            queries_csv_writer.writerow([query_json[0]['accession'],query_json[0]['description'],query_json[0]['num_of_islands'],query_json[0]['length']])
+            queries_csv_writer.writerow(['Islands'])
+            queries_csv_writer.writerow(['Start','End','Length', 'Number of Genes'])
+            for query in query_json[0]['islands']:
+                queries_csv_writer.writerow([query['start'],query['end'],query['length'],query['num_of_genes']])
+
+        target_json = ParseGbk.parse(db_folder, ref_fasta_dir, "NONE", True, True)
+
         with open(outfolder + 'targets.json', 'w') as outfile1:
             json.dump(target_json, outfile1)
+
+        with open(outfolder + 'targets_csv_file.csv','w') as queries_csv_file:
+            queries_csv_writer = csv.writer(queries_csv_file)
+            queries_csv_writer.writerow(['Accession Number','Specie','Description','Length','Number of Genes'])
+            for target in target_json:
+                queries_csv_writer.writerow([target['accession'],target['organism'],target['description'],target['length'],target['number_of_genes']])
 
         logging.info( 'Run biclustering' )
         # create the queries file
@@ -285,7 +301,6 @@ def main():
         general_stats = []
         file_num = 1
         tuple_list_array = []
-        e_val = 0.01
         for file in query_fasta_list:
             logging.info( 'File Number ' + str(file_num) )
             file_num += 1
@@ -299,12 +314,15 @@ def main():
             blast_parse_tmp = blast_parse_dir + file.split("/")[-1].split(".")[-2] + "/"
             bicluster_results_tmp = outfolder + file.split("/")[-1].split(".")[-2] + "/"
 
-            logging.info( str(file) + "\n" + str(db_folder) + "\n" + str(ref_fasta_dir) + "\n" + str(
-                query_fasta_dir) + "\n" + str(blast_results_tmp) + "\n" + str(blast_parse) + "\n" + str(
-                query_gene_list_dir) + "\n" + outfolder )
-            tuple_list = (file, db_folder, ref_fasta_dir, query_fasta_dir, blast_results_tmp, e_val, blast_parse_tmp,
-                          query_gene_list_dir, bicluster_results_tmp, genome_size)
-            file_stats = biclustering(tuple_list, high_throughput)
+            logging.info( str(file) + "," + str(db_folder) + "," + str(ref_fasta_dir) + "," + str(
+                query_fasta_dir) + "," + str(blast_results_tmp) + "," + str(blast_parse) + "," + str(
+                query_gene_list_dir) + "," + outfolder )
+            tuple_list = (file, db_folder, ref_fasta_dir, query_fasta_dir, blast_results_tmp, blast_parse_tmp,
+                          query_gene_list_dir, bicluster_results_tmp, genome_size, min_genes_per_interval, min_genomes_per_block, window_size, e_val, min_rank)
+            #****#
+            file_stats = biclustering(tuple_list)
+            #****#
+
             if not high_throughput:
                 file_stats['accession'] = query_file_name
                 with open(outfolder + 'queries.json') as data_file:
@@ -320,8 +338,16 @@ def main():
             else:
                 tuple_list_array.append((query_gene_list_dir + file.split("/")[-1].split(".")[0] + ".txt", blast_parse_tmp, './', db_folder))
 
-        # if island_viewer_format:
-        #     parallel_high_throughput_test(tuple_list_array)
+        with open(outfolder + 'general_results.csv','w') as general_results_csv_file:
+            general_results_csv_writer = csv.writer(general_results_csv_file)
+            general_results_csv_writer.writerow(['Accession Number- Start of Island - End of Island','Max Ranking Score','Number of Cliques','Number of Blocks','Avg Blocks per Clique','Context Switch'])
+            for result in general_stats:
+                general_results_csv_writer.writerow([result['accession'],result['max_pval'],result['num_of_cliques'],result['numOfBlocks'],result['avgBlockPerClique'],result['context_switch']])
+
+        for root, dirs, files in os.walk(outfolder):
+            for file in files:
+                if file.endswith('.json'):
+                    os.remove(root + '/' + file)
 
 
 if __name__ == '__main__':
