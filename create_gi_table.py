@@ -10,6 +10,7 @@ import uniprot as uni
 
 __author__ = 'user'
 
+# Maybe will be added in the future. Give each gene its uniprot id.
 def add_gi(feature,gi_to_go):
     if feature.qualifiers['db_xref'][0].split(':')[0] == 'GI':
         gi = feature.qualifiers['db_xref'][0].split(':')[1]

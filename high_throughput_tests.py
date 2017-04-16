@@ -4,15 +4,13 @@ import copy
 import os
 import math
 import itertools
-from sets import Set
-import numpy
-
-from scipy.stats import hypergeom
-
-from sklearn.cluster import DBSCAN
-
 import networkx as nx
 import json
+import numpy
+from scipy.stats import hypergeom
+from sklearn.cluster import DBSCAN
+from sets import Set
+
 
 MIN_NUM_OF_GENOMES_IN_CLUSTER = 5
 MIN_NUM_OF_GENES_IN_INTERVAL = 3

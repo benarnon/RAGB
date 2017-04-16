@@ -1,7 +1,7 @@
 from unittest import TestCase
-from computeBicliques import Bicluster
-from computeBicliques import Gene
-import computeBicliques
+from compute_bicliques import Bicluster
+from compute_bicliques import Gene
+import compute_bicliques
 from bitarray import bitarray
 
 __author__ = 'user'
@@ -103,7 +103,7 @@ class TestBicluster(TestCase):
     self.assertEqual(bic4.containInArray(BicArray),1)
 
   def test_calculat_subsets(self):
-      a = computeBicliques.calculate_subsets(50)
+      a = compute_bicliques.calculate_subsets(50)
       self.assertEqual((1,2,3,4) in a,True)
       self.assertEqual((17,21,22,23) in a,True)
 

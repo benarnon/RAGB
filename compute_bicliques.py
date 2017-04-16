@@ -10,52 +10,29 @@ import csv
 from sets import Set
 from scipy.stats import hypergeom
 from sklearn.cluster import DBSCAN
+from utilities import Utilities
 
 MIN_NUM_OF_GENOMES_IN_CLUSTER = 4
 WINDOW_SLIDE_SIZE = 16
 MIN_NUM_OF_GENES_IN_INTERVAL = 2
-size_of_genome = 0
-number_of_genomes = 0
-min_pval = 20
+MIN_PVAL = 20
+SIZE_OF_GENOME = 0
+NUMBER_OF_GENOMES = 0
 GENES_GAP = 2000
 GENES_OVERLAP = 100
 
 
-# the pipeline: CreateGraph: create a bipartite graph G=(A+B,E) where A={gi | gi gene at the centroid genome) A is order by the their gi.start. B = { geneInterval(i)| each geneInterval(i) is one sliding window of d genes
-# from the reference genome where its id is been represented by the color of geneInterval(i)
-
-def files_in_dir(root_dir):
-    results = []
-    for file in os.listdir(root_dir):
-        if file.endswith(".ffc"):
-            results.append(file)
-    return results
-
-
-def calculate_lengths(root_dir, results):
-    genomes_length = {}
-    for result in results:
-
-        path = root_dir + "/" + result
-        with open(path, 'r') as f:
-            count = 0
-            for line in f:
-                if line[0] == ">":
-                    count += 1
-            genomes_length[result.split(".")[0]] = count
-    return genomes_length
-
-
+# The pipeline: CreateGraph: create a bipartite graph G=(A+B,E) where A={gi | gi gene at the centroid genome) A is order by the their gi.start}. B = { geneInterval(i)| each geneInterval(i) is one sliding window of d genes
+# from the reference genome where its id is been represented by the color of geneInterval(i) }
 def compute_length(root_dir):
-    results = files_in_dir(root_dir)
-    return calculate_lengths(root_dir, results)
+    results = Utilities.files_in_dir(root_dir)
+    return Utilities.calculate_lengths(root_dir, results)
 
 
 def calculate_subsets(array_length, edges_group):
     total_subsets = []
     if WINDOW_SLIDE_SIZE < array_length:
         for i in range(WINDOW_SLIDE_SIZE, array_length + 1):
-            # logging.info("Calculate set for the " + str(i) + " sliding window")
             tmp_arr = []
             for edge in edges_group:
                 if i - WINDOW_SLIDE_SIZE <= edge < i:
@@ -69,30 +46,26 @@ def calculate_subsets(array_length, edges_group):
         for edge in edges_group:
             tmp_arr.append(edge)
         tmp_subsets = list(itertools.chain(
-            *(list(itertools.combinations(tmp_arr, n)) for n in range(MIN_NUM_OF_GENES_IN_INTERVAL, len(tmp_arr) + 1))))
+            *(list(itertools.combinations(tmp_arr, n)) for n in
+              range(MIN_NUM_OF_GENES_IN_INTERVAL, len(tmp_arr) + 1))))
         total_subsets.append(tmp_subsets)
     logging.info("Finish subset")
     return total_subsets
 
 
-def ncr(n, r):
-    f = math.factorial
-    return f(n) / f(r) / f(n - r)
-
-
-# Calculate pvalue accordibng to the following equation ((n-k)C(d-k)/(nCd)*(n-d))^c
+# Calculate ranking score according to the following equation ((n-k)C(d-k)/(nCd)*(n-d))^c
 # n: size of genome
 # d: length of the interval/operon in the query
 # k: number of genes in A (in the operon)
 # c: number of genomes in the bicluster
-def calculate_log_pval(m,n, d, c, k):
+def calculate_log_pval(m, n, d, c, k):
     if d > n:
         d = n
-    up = ncr(n - k, d - k)
-    down = ncr(n, d)
+    up = Utilities.ncr(n - k, d - k)
+    down = Utilities.ncr(n, d)
     p = float(float(up) / float(down))
     p = p * (n - d)
-    i_prime =  math.floor(float((m+1)*float(p)))
+    i_prime = math.floor(float((m + 1) * float(p)))
     # logging.info( i_prime
     if i_prime > m:
         i_prime = m
@@ -100,37 +73,41 @@ def calculate_log_pval(m,n, d, c, k):
         i_prime = c
     if p > 1:
         return -1
-    pval = -float(float(math.log10(m-c+1)) + float(math.log10(ncr(m,i_prime))) + float(i_prime*math.log10(p)) + float((m-i_prime)*math.log10(1-p)))
+    pval = -float(
+        float(math.log10(m - c + 1)) + float(math.log10(Utilities.ncr(m, i_prime))) + float(i_prime * math.log10(p)) + float(
+            (m - i_prime) * math.log10(1 - p)))
     # logging.info( "m=" + str(m) + " n=" + str(n) + " d=" + str(d) + " c=" + str(c) +  " k=" + str(k) + " m=" + str(m) + " up= " + str(up) + "  down= " + str(down) + " p=" + str(p) + " i_prime=" + str(i_prime) + " pval=" + str(pval)
     return pval
 
 
-def ld(s, t, direction_s, direction_t, query_set):
+# Implementation for edit distance which takes into consideration the strand of the genes. Deletion and mismatch are equal 1 and match with different strands equals 0.5.
+# In this function we measure the edit distance of only the substring of genes from the query_set.
+def edit_distance(s, t, direction_s, direction_t, query_set):
     s_prime = []
     t_prime = []
-    direction_sprime = []
-    direction_tprime = []
+    directions_s_prime = []
+    directions_t_prime = []
     i = 0
     for gene in s:
         if gene in query_set:
             s_prime.append(gene)
-            direction_sprime.append(direction_s[i])
+            directions_s_prime.append(direction_s[i])
         i += 1
     i = 0
     for gene in t:
         if gene in query_set:
             t_prime.append(gene)
-            direction_tprime.append(direction_t[i])
+            directions_t_prime.append(direction_t[i])
         i += 1
     s_prime[1:len(s_prime) + 1] = s_prime[0:len(s_prime)]
     s_prime[0] = ''
-    direction_sprime[1:len(direction_sprime) + 1] = direction_sprime[0:len(direction_sprime)]
-    direction_sprime[0] = ''
+    directions_s_prime[1:len(directions_s_prime) + 1] = directions_s_prime[0:len(directions_s_prime)]
+    directions_s_prime[0] = ''
 
     t_prime[1:len(t_prime) + 1] = t_prime[0:len(t_prime)]
     t_prime[0] = ''
-    direction_tprime[1:len(direction_tprime) + 1] = direction_tprime[0:len(direction_tprime)]
-    direction_tprime[0] = ''
+    directions_t_prime[1:len(directions_t_prime) + 1] = directions_t_prime[0:len(directions_t_prime)]
+    directions_t_prime[0] = ''
     d = {}
     s = len(s_prime)
     t = len(t_prime)
@@ -141,7 +118,7 @@ def ld(s, t, direction_s, direction_t, query_set):
     for j in range(1, t):
         for i in range(1, s):
             if s_prime[i] == t_prime[j]:
-                if direction_sprime[i] == direction_tprime[j]:
+                if directions_s_prime[i] == directions_t_prime[j]:
                     d[i, j] = d[i - 1, j - 1]
                 else:
                     d[i, j] = min(d[i - 1, j - 1] + 0.5, min(d[i - 1, j], d[i, j - 1]) + 1)
@@ -151,31 +128,30 @@ def ld(s, t, direction_s, direction_t, query_set):
 
 
 # Edit distance with all the genes, not only the query
-
-def ld2(s, t, direction_s, direction_t):
+def edit_distance2(s, t, direction_s, direction_t):
     s_prime = []
     t_prime = []
-    direction_sprime = []
-    direction_tprime = []
+    directions_s_prime = []
+    directions_t_prime = []
     i = 0
     for gene in s:
         s_prime.append(gene)
-        direction_sprime.append(direction_s[i])
+        directions_s_prime.append(direction_s[i])
         i += 1
     i = 0
     for gene in t:
         t_prime.append(gene)
-        direction_tprime.append(direction_t[i])
+        directions_t_prime.append(direction_t[i])
         i += 1
     s_prime[1:len(s_prime) + 1] = s_prime[0:len(s_prime)]
     s_prime[0] = ''
-    direction_sprime[1:len(direction_sprime) + 1] = direction_sprime[0:len(direction_sprime)]
-    direction_sprime[0] = ''
+    directions_s_prime[1:len(directions_s_prime) + 1] = directions_s_prime[0:len(directions_s_prime)]
+    directions_s_prime[0] = ''
 
     t_prime[1:len(t_prime) + 1] = t_prime[0:len(t_prime)]
     t_prime[0] = ''
-    direction_tprime[1:len(direction_tprime) + 1] = direction_tprime[0:len(direction_tprime)]
-    direction_tprime[0] = ''
+    directions_t_prime[1:len(directions_t_prime) + 1] = directions_t_prime[0:len(directions_t_prime)]
+    directions_t_prime[0] = ''
     d = {}
     s = len(s_prime)
     t = len(t_prime)
@@ -186,7 +162,7 @@ def ld2(s, t, direction_s, direction_t):
     for j in range(1, t):
         for i in range(1, s):
             if s_prime[i] == t_prime[j]:
-                if direction_sprime[i] == direction_tprime[j]:
+                if directions_s_prime[i] == directions_t_prime[j]:
                     d[i, j] = d[i - 1, j - 1]
                 else:
 
@@ -198,7 +174,8 @@ def ld2(s, t, direction_s, direction_t):
 
 # type of A vertex. Each vertex correspond to a gene in the centroid genome. Each node contains: id, name, start postion and end postion.
 class Gene(object):
-    def __init__(self, id, name, gene_id, start, stop, strand, attribute, target_gene_name, target_gene_attribute, eval):
+    def __init__(self, id, name, gene_id, start, stop, strand, attribute, target_gene_name, target_gene_attribute,
+                 eval):
         """
 
         :rtype : object
@@ -215,7 +192,8 @@ class Gene(object):
         self.eval = eval
 
     def to_json(self):
-        ans = {'id': self.id, 'name': self.name, 'gene_id': self.gene_id, 'start': self.start, 'stop': self.stop, 'strand': self.strand,
+        ans = {'id': self.id, 'name': self.name, 'gene_id': self.gene_id, 'start': self.start, 'stop': self.stop,
+               'strand': self.strand,
                'attribute': self.attribute, 'target_gene_name': self.target_gene_name,
                'target_gene_attribute': self.target_gene_attribute, 'eval': self.eval}
         return ans
@@ -338,11 +316,12 @@ class BiPartiteGrpah(object):
     def get_b(self):
         return self.B
 
-    def set_n(self,n):
+    def set_n(self, n):
         self.n = n
 
     def get_n(self):
         return self.n
+
     '''
     Add new edge first check if Ai (node from A) is exist than verify that the color
      exist and than check if Bj is not already exist in Ai in color color
@@ -376,8 +355,6 @@ class BiPartiteGrpah(object):
        finish at i+l and are at the size of s.
     3. For each group we create an bitarrray size of |B| where each bit represents a node in B.
     '''
-
-    # noinspection PyPep8Naming
     def calculate_biclutsers(self):
         aGroups = []
         logging.info("Calculate Bicluster() start")
@@ -404,9 +381,10 @@ class BiPartiteGrpah(object):
                         biclique = full_bicluster()
                         biclique.set_a(subset)
                         biclique.set_b(b_prime)
-                        pval = calculate_log_pval(number_of_genomes,size_of_genome, WINDOW_SLIDE_SIZE, bic_color, len(subset))
+                        pval = calculate_log_pval(NUMBER_OF_GENOMES, SIZE_OF_GENOME, WINDOW_SLIDE_SIZE, bic_color,
+                                                  len(subset))
                         biclique.set_pvalue(pval)
-                        if self.check_bic(biclique) == 1 and pval > min_pval:
+                        if self.check_bic(biclique) == 1 and pval > MIN_PVAL:
                             self.bic_results.append(biclique)
                             aGroups.append(biclique.get_a())
 
@@ -456,15 +434,13 @@ class BiPartiteGrpah(object):
                 bic.distanceMatrix.append([])
                 j = 0
                 for instance2 in instances:
-                    tmp = float(
-                        ld2(copy.deepcopy(instance), copy.deepcopy(instance2), copy.deepcopy(direction_instances[i]),
-                            copy.deepcopy(direction_instances[j])))
+                    tmp = float(edit_distance2(copy.deepcopy(instance), copy.deepcopy(instance2), copy.deepcopy(direction_instances[i]),copy.deepcopy(direction_instances[j])))
                     tmp_direction = direction_instances[i]
                     inverse_instance = list(reversed(instance))
                     inverse_direction_instance = list(reversed(tmp_direction))
                     inverse_direction_instance[:] = [int(x) * -1 for x in inverse_direction_instance]
                     inverse_direction_instance[:] = [str(x) for x in inverse_direction_instance]
-                    tmp2 = float(ld2(copy.deepcopy(inverse_instance), copy.deepcopy(instance2),
+                    tmp2 = float(edit_distance2(copy.deepcopy(inverse_instance), copy.deepcopy(instance2),
                                      copy.deepcopy(inverse_direction_instance), copy.deepcopy(direction_instances[j])))
                     bic.distanceMatrix[i].append(float(min(tmp, tmp2)))
                     j += 1
@@ -541,7 +517,7 @@ def max_pvalue(clique, bip_graph):
     return pval
 
 
-def check_double_context_switch(block,bip_graph):
+def check_double_context_switch(block, bip_graph):
     tmp_strain_dict = {}
     check_context_set = set()
     for b in block.B:
@@ -552,7 +528,7 @@ def check_double_context_switch(block,bip_graph):
     return len(check_context_set) > 1
 
 
-def check_context_switch(block,bip_graph):
+def check_context_switch(block, bip_graph):
     tmp_strain_dict = {}
     for b in block.B:
         strain = bip_graph.B[b].organism
@@ -570,7 +546,7 @@ class BlockGraph(object):
         self.super_cliques = []
 
     def init_block_graph(self, bip_graph, filter_context_switch):
-        logging.info( "Init block graph " )
+        logging.info("Init block graph ")
         i = 0
         for bic in bip_graph.bic_results:
             add_block = True
@@ -654,11 +630,13 @@ class BlockGraph(object):
             data_query['A'].append(a.to_json())
         with open(outfile + '_query.json', 'w') as outfile2:
             json.dump(data_query, outfile2)
-        with open(outfile + '_query_csv_file.csv','w') as query_csv_file:
+        with open(outfile + '_query_csv_file.csv', 'w') as query_csv_file:
             query_csv_writer = csv.writer(query_csv_file)
-            query_csv_writer.writerow(['Number','Start','End','Gene Id','Gene Name','Attribute','Strand'])
+            query_csv_writer.writerow(['Number', 'Start', 'End', 'Gene Id', 'Gene Name', 'Attribute', 'Strand'])
             for query_gene in data_query['A']:
-                query_csv_writer.writerow([query_gene['id']+1,query_gene['start'],query_gene['stop'],query_gene['gene_id'],query_gene['name'],query_gene['attribute'],query_gene['strand']])
+                query_csv_writer.writerow(
+                    [query_gene['id'] + 1, query_gene['start'], query_gene['stop'], query_gene['gene_id'],
+                     query_gene['name'], query_gene['attribute'], query_gene['strand']])
         data_blocks = {'Minimum_Number_Genomes_In_Bicluster': str(MIN_NUM_OF_GENOMES_IN_CLUSTER + 1),
                        'Minimum_Number_Genes_Interval': str(MIN_NUM_OF_GENES_IN_INTERVAL + 1),
                        'Window_Size': str(WINDOW_SLIDE_SIZE), 'Genes_Gap': str(GENES_GAP),
@@ -669,7 +647,7 @@ class BlockGraph(object):
             clique = sorted(clique, key=lambda j: bip_graph.bic_results[j].pval, reverse=True)
             bol = 0
             for block in clique:
-                if bip_graph.bic_results[block].pval > min_pval:
+                if bip_graph.bic_results[block].pval > MIN_PVAL:
                     bol = 1
             if bol == 1:
                 data_blocks['Cliques'].append({'id': i})
@@ -684,48 +662,60 @@ class BlockGraph(object):
         with open(outfile + '.json', 'w') as outfile3:
             json.dump(data_blocks, outfile3)
 
-        with open(outfile + '_csv_file.csv','w') as results_csv_file:
+        with open(outfile + '_csv_file.csv', 'w') as results_csv_file:
             results_csv_writer = csv.writer(results_csv_file)
             for clique in data_blocks['Cliques']:
-                results_csv_writer.writerow(['Clique Number',str(clique['id']+1)])
+                results_csv_writer.writerow(['Clique Number', str(clique['id'] + 1)])
                 block_index = 1
                 for block in clique['Blocks']:
                     results_csv_writer.writerow([' '])
-                    results_csv_writer.writerow(['Block Number',block_index, 'Ranking Score',block['pvalue'],'Number of Genes from the Query genome',str(len(block['A'])),'Number of Intervals from the Target genomes',str(len(block['B']))])
+                    results_csv_writer.writerow(['Block Number', block_index, 'Ranking Score', block['pvalue'],
+                                                 'Number of Genes from the Query genome', str(len(block['A'])),
+                                                 'Number of Intervals from the Target genomes', str(len(block['B']))])
                     block_index += 1
                     results_csv_writer.writerow([' '])
                     results_csv_writer.writerow(['Group A'])
-                    results_csv_writer.writerow(['Gene Number','Start','End','Gene Id','Gene Name','Attribute','Strand'])
+                    results_csv_writer.writerow(
+                        ['Gene Number', 'Start', 'End', 'Gene Id', 'Gene Name', 'Attribute', 'Strand'])
                     for gene in block['A']:
-                        results_csv_writer.writerow([gene['id']+1,gene['start'],gene['stop'],gene['gene_id'],gene['name'],gene['attribute'],gene['strand']])
+                        results_csv_writer.writerow(
+                            [gene['id'] + 1, gene['start'], gene['stop'], gene['gene_id'], gene['name'],
+                             gene['attribute'], gene['strand']])
                     results_csv_writer.writerow([' '])
                     results_csv_writer.writerow(['Group B'])
                     for gene_interval in block['B']:
                         results_csv_writer.writerow([' '])
-                        results_csv_writer.writerow(['Specie',gene_interval['organism'],'Strain',gene_interval['strain'],'Number of Genes',gene_interval['numOfGenes']])
-                        results_csv_writer.writerow(['Gene Number','Start','End','Gene Id','Gene Name','Attribute','Strand','Target Gene Id','Target Gene Attribute','Blast E-value'])
+                        results_csv_writer.writerow(
+                            ['Specie', gene_interval['organism'], 'Strain', gene_interval['strain'], 'Number of Genes',
+                             gene_interval['numOfGenes']])
+                        results_csv_writer.writerow(
+                            ['Gene Number', 'Start', 'End', 'Gene Id', 'Gene Name', 'Attribute', 'Strand',
+                             'Target Gene Id', 'Target Gene Attribute', 'Blast E-value'])
                         for gene in gene_interval['genes']:
                             print gene
-                            results_csv_writer.writerow([gene_name_to_number[gene['name']]+1,gene['start'],gene['stop'],gene['gene_id'],gene['name'],gene['attribute'],gene['strand'],gene['target_gene_name'],gene['target_gene_attribute'],gene['eval']])
-# noinspection PyPep8Naming
-def returnRecursiveDirFiles(root_dir):
-    result = []
-    for path, dir_name, flist in os.walk(root_dir):
-        for f in flist:
-            fname = os.path.join(path, f)
-            if os.path.isfile(fname):
-                result.append(fname)
-    return result
+                            results_csv_writer.writerow(
+                                [gene_name_to_number[gene['name']] + 1, gene['start'], gene['stop'], gene['gene_id'],
+                                 gene['name'], gene['attribute'], gene['strand'], gene['target_gene_name'],
+                                 gene['target_gene_attribute'], gene['eval']])
 
 
-# noinspection PyPep8Naming
+# def returnRecursiveDirFiles(root_dir):
+#     result = []
+#     for path, dir_name, flist in os.walk(root_dir):
+#         for f in flist:
+#             fname = os.path.join(path, f)
+#             if os.path.isfile(fname):
+#                 result.append(fname)
+#     return result
+
+
 def create_bipartite_graph(query_file, fname_list, refernce_folder):
     # Map each strain to its oragnism
     """
 
     :rtype : object
     """
-    global number_of_genomes
+    global NUMBER_OF_GENOMES
 
     bipartite_graph = BiPartiteGrpah()
     # Map each strain to its correspond organims and map each organism to its correspond color
@@ -756,7 +746,8 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
     logging.info("Construct A")
     for line in [i.strip() for i in open(query_file).readlines()]:
         query_gene_name, query_gene_id, gene_start, gene_stop, query_gene_attribute, gene_strand = line.split("\t")
-        gene = Gene(geneId, query_gene_name, query_gene_id, int(gene_start), int(gene_stop), gene_strand, query_gene_attribute, "", "",
+        gene = Gene(geneId, query_gene_name, query_gene_id, int(gene_start), int(gene_stop), gene_strand,
+                    query_gene_attribute, "", "",
                     0)
         bipartite_graph.add_gene(gene)
         genes_dict[line.split("\t")[0]] = geneId
@@ -766,7 +757,7 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
     bipartite_graph.set_d(geneId)
     geneId = 0
     interval_id = 0
-    number_of_genomes = len(fname_list)
+    NUMBER_OF_GENOMES = len(fname_list)
 
     # Construct bipartite.B and create edges.
     logging.info("Construct B")
@@ -785,7 +776,8 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
             if line != "":
                 gene_start, gene_stop, gene_strand, query_gene_name, query_gene_id, query_gene_attribute, e_val, a, b, gene_name, gene_attribute = line.split(
                     "|")
-                gene = Gene(geneId, query_gene_name, query_gene_id, int(gene_start), int(gene_stop), gene_strand, query_gene_attribute,
+                gene = Gene(geneId, query_gene_name, query_gene_id, int(gene_start), int(gene_stop), gene_strand,
+                            query_gene_attribute,
                             gene_name, gene_attribute, e_val)
                 if abs(gene.start - lastGene.stop) < GENES_GAP or abs(
                                 gene.start - lastGene.start) < GENES_OVERLAP or geneId == 0:
@@ -818,7 +810,8 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
                 bipartite_graph.add_edge(genes_dict[geneI.name], interval_id)
             interval_id += 1
         color += 1
-    logging.info("Created bipartite graph with A= " + str(len(bipartite_graph.get_a())) + " B=" + str(len(bipartite_graph.get_b())) + " E=" + str(len(bipartite_graph.get_edges())))
+    logging.info("Created bipartite graph with A= " + str(len(bipartite_graph.get_a())) + " B=" + str(
+        len(bipartite_graph.get_b())) + " E=" + str(len(bipartite_graph.get_edges())))
     return bipartite_graph
 
 
@@ -833,21 +826,22 @@ def create_run_stats(bipartite_graph, block_graph):
     for clique in block_graph.cliques:
         bol = 0
         for block in clique:
-            check_double_context_switch_bol |= check_double_context_switch(bipartite_graph.bic_results[block], bipartite_graph)
+            check_double_context_switch_bol |= check_double_context_switch(bipartite_graph.bic_results[block],
+                                                                           bipartite_graph)
             check_context_switch_bol |= check_context_switch(bipartite_graph.bic_results[block], bipartite_graph)
             # logging.info( 'real\ testy'
             # logging.info( check_context_switch_bol
             if bipartite_graph.bic_results[block].pval > max_pval:
                 max_pval = bipartite_graph.bic_results[block].pval
                 bol2 = 1
-            if bipartite_graph.bic_results[block].pval > min_pval:
+            if bipartite_graph.bic_results[block].pval > MIN_PVAL:
                 bol = 1
         if bol == 1:
             num_of_cliques += 1
             num_of_block += len(clique)
     ans = {
-        'context_switch' : check_context_switch_bol,
-        'double_context_switch' : check_double_context_switch_bol,
+        'context_switch': check_context_switch_bol,
+        'double_context_switch': check_double_context_switch_bol,
         'numOfBlocks': num_of_block,
         'num_of_cliques': num_of_cliques,
         'avgBlockPerClique': 0,
@@ -863,36 +857,42 @@ def create_run_stats(bipartite_graph, block_graph):
 
 
 def parallel_compute_biclusters_dict(query_file, blast_parse_folder, out_folder, reference_folder):
-    logging.info('Compute Biclustering section')
     bilcuster_out_folder = out_folder
     if not os.path.isdir(bilcuster_out_folder):
         os.makedirs(bilcuster_out_folder)
-    fname_list = returnRecursiveDirFiles(blast_parse_folder)
+    fname_list = Utilities.return_recursive_dir_files(blast_parse_folder)
 
     bipartite_graph = create_bipartite_graph(query_file, fname_list, reference_folder)
-    logging.info("Finish create the graph")
     # In the case of on operon D is equal to the size of the operon, in the case where we divide the query into mulyiple operon regions we will have to set D for each one of them.
     bipartite_graph.calculate_biclutsers()
     bipartite_graph.calculate_distance_matrices()
+    logging.info("Finish create graph where |A|=" + str(len(bipartite_graph.A)) + " and |B|= " + str(
+        len(bipartite_graph.A)) + " and |E|=" + str(len(bipartite_graph.E)))
 
     block_graph = BlockGraph()
     bol = False
-    block_graph.init_block_graph(bipartite_graph,bol)
+    block_graph.init_block_graph(bipartite_graph, bol)
     block_graph.cliques_to_json(out_folder + query_file.split("/")[-1].split(".")[0], bipartite_graph)
 
     # bipartite_graph.parse_results(reference_folder, out_folder, query_file)
-    logging.info("Finish create graph where |A|=" + str(len(bipartite_graph.A)) + " and |B|= " + str(
-        len(bipartite_graph.A)) + " and |E|=" + str(len(bipartite_graph.E)))
+
     return create_run_stats(bipartite_graph, block_graph)
 
 
-def compute_bicluster(query_file, blast_parse_folder, out_folder, reference_folder,genome_size,min_genes_per_interval, min_genomes_per_block,window_size, e_val, min_rank):
-    logging.info(
-        "Compute Biclusters " + query_file + " " + blast_parse_folder + " " + out_folder + " " + reference_folder)
-    logging.info("Compute bicliques")
-    global size_of_genome
-    logging.info("Genome size " + str(size_of_genome))
-    size_of_genome = genome_size
+def compute_bicluster(query_file, blast_parse_folder, out_folder, reference_folder, genome_size, min_genes_per_interval,
+                      min_genomes_per_block, window_size, e_val, min_rank):
+    global MIN_NUM_OF_GENOMES_IN_CLUSTER
+    global WINDOW_SLIDE_SIZE
+    global MIN_NUM_OF_GENES_IN_INTERVAL
+    global MIN_PVAL
+    MIN_NUM_OF_GENOMES_IN_CLUSTER = min_genomes_per_block
+    WINDOW_SLIDE_SIZE = window_size
+    MIN_NUM_OF_GENES_IN_INTERVAL = min_genes_per_interval
+    MIN_PVAL = min_rank
+    logging.info('Compute Biclusters ' + query_file + " " + blast_parse_folder + " " + out_folder + " " + reference_folder)
+    global SIZE_OF_GENOME
+    SIZE_OF_GENOME = genome_size
+    logging.info("Genome size " + str(SIZE_OF_GENOME))
 
     start = time.time()
     stats_json = parallel_compute_biclusters_dict(query_file, blast_parse_folder, out_folder, reference_folder)

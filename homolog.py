@@ -1,18 +1,8 @@
-# in this version of the class i am removing everyting that has HGT.  This class assumes that the DB searched is protein.
-
-# TODO BLAST field 0 and 1 should actually be generated and formatted by seperate classes that the Homolog class inherits.  In this way any update to information we
-# scrape into these fields will automatically be incorporated.  this is not done, and will be put off while i move on, but needs ot be done eventually to make this easier to 
-# maintain in the future.
-
-
-# Copyright(C) 2014 David Ream
-# Released under GPL version 3 licence. http://www.gnu.org/licenses/lgpl.html
-# Do not remove this comment
 import logging
 
 class Homolog:
     """This is a class that will hold the values that i wish to store about homologs"""
-    #def __init__(self, Accession, Organism, Locus, Gene, Predicted_gene, Synonyms, Eval, Percent_ident, Bits_score, GC, Start, Stop, Strand, Product_type, HGT_candidate = {'likelyhood':'not_eval', 'method': 
+    #def __init__(self, Accession, Organism, Locus, Gene, Predicted_gene, Synonyms, Eval, Percent_ident, Bits_score, GC, Start, Stop, Strand, Product_type, HGT_candidate = {'likelyhood':'not_eval', 'method':
     #def __init__(self, Accession, Organism, Locus, Gene, Predicted_gene, Synonyms, Eval, Percent_ident, Bits_score, GC, Start, Stop, Strand, Product_type, Alignment_length, Method, Query_accession, Query_common, Query_locus, Query_start): #, Seq):
     #query_accesssion, query_common, query_locus, query_gene_name, query_gene_id, query_description, query_start, query_end, query_strand, query_gc,target_accession, target_common, target_locus, target_gene_name, target_description, target_start, target_end, target_strand, target_gc, percent_ident, aligned_length, number_mismatched, number_gaps, align_query_start, align_query_stop, align_subject_start, align_subject_stop, Eval, bits_score
     def __init__(self, Query_accession, Query_common, Query_locus, Query_gene_name, Query_gene_id, Query_description, Query_start, Query_stop, Query_strand, Query_gc, Accession, Organism, Locus, Gene_name, Description, Start, Stop, Strand, GC, Percent_ident, Aligned_length, Number_mismatched, Number_gaps, Align_query_start, Align_query_stop, Align_subject_start, Align_subject_stop, Eval, Bits_score):
