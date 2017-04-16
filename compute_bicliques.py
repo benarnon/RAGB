@@ -15,7 +15,7 @@ from utilities import Utilities
 MIN_NUM_OF_GENOMES_IN_CLUSTER = 4
 WINDOW_SLIDE_SIZE = 16
 MIN_NUM_OF_GENES_IN_INTERVAL = 2
-MIN_PVAL = 20
+MIN_RANKING_SCORE = 20
 SIZE_OF_GENOME = 0
 NUMBER_OF_GENOMES = 0
 GENES_GAP = 2000
@@ -58,7 +58,7 @@ def calculate_subsets(array_length, edges_group):
 # d: length of the interval/operon in the query
 # k: number of genes in A (in the operon)
 # c: number of genomes in the bicluster
-def calculate_log_pval(m, n, d, c, k):
+def calculate_log_ranking_score(m, n, d, c, k):
     if d > n:
         d = n
     up = Utilities.ncr(n - k, d - k)
@@ -66,18 +66,17 @@ def calculate_log_pval(m, n, d, c, k):
     p = float(float(up) / float(down))
     p = p * (n - d)
     i_prime = math.floor(float((m + 1) * float(p)))
-    # logging.info( i_prime
     if i_prime > m:
         i_prime = m
     elif i_prime < c:
         i_prime = c
     if p > 1:
         return -1
-    pval = -float(
+    ranking_score = -float(
         float(math.log10(m - c + 1)) + float(math.log10(Utilities.ncr(m, i_prime))) + float(i_prime * math.log10(p)) + float(
             (m - i_prime) * math.log10(1 - p)))
-    # logging.info( "m=" + str(m) + " n=" + str(n) + " d=" + str(d) + " c=" + str(c) +  " k=" + str(k) + " m=" + str(m) + " up= " + str(up) + "  down= " + str(down) + " p=" + str(p) + " i_prime=" + str(i_prime) + " pval=" + str(pval)
-    return pval
+    # logging.info( "m=" + str(m) + " n=" + str(n) + " d=" + str(d) + " c=" + str(c) +  " k=" + str(k) + " m=" + str(m) + " up= " + str(up) + "  down= " + str(down) + " p=" + str(p) + " i_prime=" + str(i_prime) + " ranking_score=" + str(ranking_score)
+    return ranking_score
 
 
 # Implementation for edit distance which takes into consideration the strand of the genes. Deletion and mismatch are equal 1 and match with different strands equals 0.5.
@@ -165,21 +164,15 @@ def edit_distance2(s, t, direction_s, direction_t):
                 if directions_s_prime[i] == directions_t_prime[j]:
                     d[i, j] = d[i - 1, j - 1]
                 else:
-
                     d[i, j] = min(d[i - 1, j - 1] + 0.5, min(d[i - 1, j], d[i, j - 1]) + 1)
             else:
                 d[i, j] = min(d[i - 1, j], d[i, j - 1], d[i - 1, j - 1]) + 1
     return d[s - 1, t - 1]
 
 
-# type of A vertex. Each vertex correspond to a gene in the centroid genome. Each node contains: id, name, start postion and end postion.
+# Gene class,
 class Gene(object):
-    def __init__(self, id, name, gene_id, start, stop, strand, attribute, target_gene_name, target_gene_attribute,
-                 eval):
-        """
-
-        :rtype : object
-        """
+    def __init__(self, id, name, gene_id, start, stop, strand, attribute, target_gene_name, target_gene_attribute, eval):
         self.id = id
         self.name = name
         self.gene_id = gene_id
@@ -199,8 +192,10 @@ class Gene(object):
         return ans
 
 
-# type of B vertex. Each vertex represents a group of genes which are close to each other from one genome.
-# Each genome is been represeneted by a color.
+'''
+GeneInterval class, Vertex in group B in the bipartite graph. Each vertex represents a group of genes which are close to each other from one genome.
+Each genome is been represented by a color.
+'''
 class GeneInterval(object):
     def __init__(self, strain_file, color, interval_id):
         self.genes = []
@@ -227,13 +222,6 @@ class GeneInterval(object):
             ans = ans + " " + gene.name + "[" + str(gene.start) + "-" + str(gene.stop) + "|" + str(gene.strand) + "]"
         return ans
 
-    def play(self):
-        ans = ""
-        ans = ans + str(self.organism) + "(" + str(self.genes[0].start) + "|" + str(self.genes[-1].stop) + ") "
-        for gene in self.genes:
-            ans = ans + " " + gene.name + "[" + str(gene.start) + "-" + str(gene.stop) + "|" + str(gene.strand) + "]"
-        return ans
-
     def to_json(self, organism, index, label):
         ans = {'color': self.color, 'id': self.interval_id, 'numOfGenes': self.numOfGenes, 'strain': self.organism,
                'organism': organism, 'genes': [], 'index': index, 'label': label}
@@ -242,19 +230,19 @@ class GeneInterval(object):
         return ans
 
 
-# This class wil represents a full biclusters where A will holds the genes name, B will holds the geneInterval
-class full_bicluster(object):
+# This class represents a full biclusters where A holds the genes name, B holds the geneIntervals.
+class FullBicluster(object):
     def __init__(self):
         self.labels = []
         self.A = []
         self.B = []
-        self.pval = 0
+        self.ranking_score = 0
 
-    def set_pvalue(self, pval):
-        self.pval = pval
+    def set_ranking_scoreue(self, ranking_score):
+        self.ranking_score = ranking_score
 
-    def get_pvalue(self):
-        return self.pval
+    def get_ranking_scoreue(self):
+        return self.ranking_score
 
     def set_a(self, a):
         self.A = a
@@ -272,7 +260,7 @@ class full_bicluster(object):
         return "A=" + str(self.A) + " B=" + str(sorted(self.B))
 
     def to_json(self, bip_graph, org_to_index, hyper_geo_array):
-        ans = {'hyper_geo_array': hyper_geo_array, 'A': [], 'B': [], 'pvalue': self.pval}
+        ans = {'hyper_geo_array': hyper_geo_array, 'A': [], 'B': [], 'ranking_scoreue': self.ranking_score}
         for a in self.A:
             ans['A'].append(bip_graph.A[a].to_json())
         i = 0
@@ -285,10 +273,11 @@ class full_bicluster(object):
         return ans
 
 
+# BiPartiteGrpah class stores all the information about the bipartite graph
 class BiPartiteGrpah(object):
     def __init__(self):
         self.bic_results = []
-        self.pval_results = []
+        self.ranking_score_results = []
         self.A = []
         self.B = []
         self.E = {}
@@ -355,8 +344,8 @@ class BiPartiteGrpah(object):
        finish at i+l and are at the size of s.
     3. For each group we create an bitarrray size of |B| where each bit represents a node in B.
     '''
-    def calculate_biclutsers(self):
-        aGroups = []
+    def calculate_biclusters(self):
+        a_groups = []
         logging.info("Calculate Bicluster() start")
         total_subsets = calculate_subsets(len(self.A) + 1, self.E)
         for indexes_subsets in total_subsets:
@@ -364,7 +353,6 @@ class BiPartiteGrpah(object):
             # logging.info( "Round " + str(round) + " Number of subsets: " + str(len(indexes_subsets))
             round += 1
             for subset in indexes_subsets:
-                # logging.info( str(subset)
                 # Check if the subset is a biclique
                 if subset != () and subset[0] in self.get_edges():
                     b_prime = copy.deepcopy(self.get_edges()[subset[0]])
@@ -374,25 +362,26 @@ class BiPartiteGrpah(object):
                                 b_prime = list(set(b_prime) & set(self.get_edges()[i]))
                         else:
                             b_prime = []
-                    bic_color = 0
+                    number_of_colors_in_bicluster = 0
                     if len(b_prime) > 0:
-                        bic_color = self.count_colors(b_prime)
-                    if bic_color > MIN_NUM_OF_GENOMES_IN_CLUSTER:
-                        biclique = full_bicluster()
+                        number_of_colors_in_bicluster = self.count_colors(b_prime)
+                    if number_of_colors_in_bicluster > MIN_NUM_OF_GENOMES_IN_CLUSTER:
+                        biclique = FullBicluster()
                         biclique.set_a(subset)
                         biclique.set_b(b_prime)
-                        pval = calculate_log_pval(NUMBER_OF_GENOMES, SIZE_OF_GENOME, WINDOW_SLIDE_SIZE, bic_color,
-                                                  len(subset))
-                        biclique.set_pvalue(pval)
-                        if self.check_bic(biclique) == 1 and pval > MIN_PVAL:
+                        ranking_score = calculate_log_ranking_score(NUMBER_OF_GENOMES, SIZE_OF_GENOME, WINDOW_SLIDE_SIZE, number_of_colors_in_bicluster,len(subset))
+                        biclique.set_ranking_scoreue(ranking_score)
+                        if self.check_bic(biclique) == 1 and ranking_score > MIN_RANKING_SCORE:
                             self.bic_results.append(biclique)
-                            aGroups.append(biclique.get_a())
+                            a_groups.append(biclique.get_a())
 
         logging.info("Finish to calculate bicliques")
 
-    # Check for each biclique in the results array:
-    # If it contains the new biclique (smaller or equal): return 0 else return 1
-    # If the new biclique contain the biclique delete the biclique from the results array
+    '''
+    Check for each biclique in the results array:
+    If it contains the new biclique (smaller or equal): return 0 else return 1
+    If the new biclique contains the biclique delete the biclique from the results array
+    '''
     def check_bic(self, bic):
         bic_a = set(bic.get_a())
         delete_array = []
@@ -463,6 +452,7 @@ class BiPartiteGrpah(object):
             bic.hyperDist = calc_hypergeom(bic.cluster_to_taxa, len(set(bic.labels)), len(bic.taxa_to_index_dict))
 
 
+# This is not relevant for the 1.0.0 version.
 def calc_hypergeom(cluster_taxa_tuples_array, num_of_clusters, num_of_taxa):
     """
     The method re
@@ -505,16 +495,15 @@ def calc_hypergeom(cluster_taxa_tuples_array, num_of_clusters, num_of_taxa):
     return stats
 
 
-# This class represents the graph of all the blocks that were founded in the bipartite graph.
-# In this graph each vertex is corresponding to gene block that was founded in the bipartite graph.
-# We connect two vertices in this graph only if they share a few genes from A in common
-# Eventaully we seek for cliques in the graph
-def max_pvalue(clique, bip_graph):
-    pval = 0
+# This class stores the blocks graph that were founded in the bipartite graph.
+# In this graph each vertex is corresponding to gene block. We connect two vertices in this graph only if they share a few genes from A in common
+# Eventually we seek for cliques in the graph
+def max_ranking_scoreue(clique, bip_graph):
+    ranking_score = 0
     for block in clique:
-        if bip_graph.bic_results[block].pval > pval:
-            pval = bip_graph.bic_results[block].pval
-    return pval
+        if bip_graph.bic_results[block].ranking_score > ranking_score:
+            ranking_score = bip_graph.bic_results[block].ranking_score
+    return ranking_score
 
 
 def check_double_context_switch(block, bip_graph):
@@ -557,7 +546,7 @@ class BlockGraph(object):
                 self.blocksGraph.add_node(i)
                 self.blocksGraph[i]['A'] = bic.get_a()
                 self.blocksGraph[i]['B'] = bic.get_b()
-                self.blocksGraph[i]['pval'] = bic.get_pvalue()
+                self.blocksGraph[i]['ranking_score'] = bic.get_ranking_scoreue()
                 self.blocksGraph[i]['hyperGeoArray'] = []
                 for d in bic.hyperDist:
                     dist = {'bestTaxa': bic.index_to_taxa_Dict[d['best_taxa']], 'bestDist': d['best_dist']}
@@ -630,7 +619,7 @@ class BlockGraph(object):
             data_query['A'].append(a.to_json())
         with open(outfile + '_query.json', 'w') as outfile2:
             json.dump(data_query, outfile2)
-        with open(outfile + '_query_csv_file.csv', 'w') as query_csv_file:
+        with open(outfile + '_query_info_file.csv', 'w') as query_csv_file:
             query_csv_writer = csv.writer(query_csv_file)
             query_csv_writer.writerow(['Number', 'Start', 'End', 'Gene Id', 'Gene Name', 'Attribute', 'Strand'])
             for query_gene in data_query['A']:
@@ -642,12 +631,12 @@ class BlockGraph(object):
                        'Window_Size': str(WINDOW_SLIDE_SIZE), 'Genes_Gap': str(GENES_GAP),
                        'Number_Of_Cliques': str(len(self.cliques)), 'Cliques': []}
         i = 0
-        self.cliques = sorted(self.cliques, key=lambda k: max_pvalue(k, bip_graph), reverse=True)
+        self.cliques = sorted(self.cliques, key=lambda k: max_ranking_scoreue(k, bip_graph), reverse=True)
         for clique in self.cliques:
-            clique = sorted(clique, key=lambda j: bip_graph.bic_results[j].pval, reverse=True)
+            clique = sorted(clique, key=lambda j: bip_graph.bic_results[j].ranking_score, reverse=True)
             bol = 0
             for block in clique:
-                if bip_graph.bic_results[block].pval > MIN_PVAL:
+                if bip_graph.bic_results[block].ranking_score > MIN_RANKING_SCORE:
                     bol = 1
             if bol == 1:
                 data_blocks['Cliques'].append({'id': i})
@@ -662,14 +651,14 @@ class BlockGraph(object):
         with open(outfile + '.json', 'w') as outfile3:
             json.dump(data_blocks, outfile3)
 
-        with open(outfile + '_csv_file.csv', 'w') as results_csv_file:
+        with open(outfile + '_results_file.csv', 'w') as results_csv_file:
             results_csv_writer = csv.writer(results_csv_file)
             for clique in data_blocks['Cliques']:
                 results_csv_writer.writerow(['Clique Number', str(clique['id'] + 1)])
                 block_index = 1
                 for block in clique['Blocks']:
                     results_csv_writer.writerow([' '])
-                    results_csv_writer.writerow(['Block Number', block_index, 'Ranking Score', block['pvalue'],
+                    results_csv_writer.writerow(['Block Number', block_index, 'Ranking Score', block['ranking_scoreue'],
                                                  'Number of Genes from the Query genome', str(len(block['A'])),
                                                  'Number of Intervals from the Target genomes', str(len(block['B']))])
                     block_index += 1
@@ -689,7 +678,7 @@ class BlockGraph(object):
                             ['Specie', gene_interval['organism'], 'Strain', gene_interval['strain'], 'Number of Genes',
                              gene_interval['numOfGenes']])
                         results_csv_writer.writerow(
-                            ['Gene Number', 'Start', 'End', 'Gene Id', 'Gene Name', 'Attribute', 'Strand',
+                            ['Gene Number', 'Start', 'End', 'Centroid Genome Gene Id', 'Centroid Genome Gene Name', 'Attribute', 'Strand',
                              'Target Gene Id', 'Target Gene Attribute', 'Blast E-value'])
                         for gene in gene_interval['genes']:
                             print gene
@@ -819,7 +808,7 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
 def create_run_stats(bipartite_graph, block_graph):
     num_of_block = 0
     num_of_cliques = 0
-    max_pval = 10
+    max_ranking_score = 10
     bol2 = 0
     check_context_switch_bol = False
     check_double_context_switch_bol = False
@@ -831,10 +820,10 @@ def create_run_stats(bipartite_graph, block_graph):
             check_context_switch_bol |= check_context_switch(bipartite_graph.bic_results[block], bipartite_graph)
             # logging.info( 'real\ testy'
             # logging.info( check_context_switch_bol
-            if bipartite_graph.bic_results[block].pval > max_pval:
-                max_pval = bipartite_graph.bic_results[block].pval
+            if bipartite_graph.bic_results[block].ranking_score > max_ranking_score:
+                max_ranking_score = bipartite_graph.bic_results[block].ranking_score
                 bol2 = 1
-            if bipartite_graph.bic_results[block].pval > MIN_PVAL:
+            if bipartite_graph.bic_results[block].ranking_score > MIN_RANKING_SCORE:
                 bol = 1
         if bol == 1:
             num_of_cliques += 1
@@ -850,7 +839,7 @@ def create_run_stats(bipartite_graph, block_graph):
         'number_of_genes': -1
     }
     if bol2 == 1:
-        ans['max_pval'] = max_pval
+        ans['max_ranking_score'] = max_ranking_score
     if ans['num_of_cliques'] != 0:
         ans['avgBlockPerClique'] = float(float(ans['numOfBlocks']) / float(ans['num_of_cliques']))
     return ans
@@ -864,7 +853,7 @@ def parallel_compute_biclusters_dict(query_file, blast_parse_folder, out_folder,
 
     bipartite_graph = create_bipartite_graph(query_file, fname_list, reference_folder)
     # In the case of on operon D is equal to the size of the operon, in the case where we divide the query into mulyiple operon regions we will have to set D for each one of them.
-    bipartite_graph.calculate_biclutsers()
+    bipartite_graph.calculate_biclusters()
     bipartite_graph.calculate_distance_matrices()
     logging.info("Finish create graph where |A|=" + str(len(bipartite_graph.A)) + " and |B|= " + str(
         len(bipartite_graph.A)) + " and |E|=" + str(len(bipartite_graph.E)))
@@ -884,11 +873,11 @@ def compute_bicluster(query_file, blast_parse_folder, out_folder, reference_fold
     global MIN_NUM_OF_GENOMES_IN_CLUSTER
     global WINDOW_SLIDE_SIZE
     global MIN_NUM_OF_GENES_IN_INTERVAL
-    global MIN_PVAL
+    global MIN_RANKING_SCORE
     MIN_NUM_OF_GENOMES_IN_CLUSTER = min_genomes_per_block
     WINDOW_SLIDE_SIZE = window_size
     MIN_NUM_OF_GENES_IN_INTERVAL = min_genes_per_interval
-    MIN_PVAL = min_rank
+    MIN_RANKING_SCORE = min_rank
     logging.info('Compute Biclusters ' + query_file + " " + blast_parse_folder + " " + out_folder + " " + reference_folder)
     global SIZE_OF_GENOME
     SIZE_OF_GENOME = genome_size

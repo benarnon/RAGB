@@ -28,7 +28,7 @@ def parser_code():
     parser.add_argument("-g", "--dbfolder", dest="dbfolder", metavar="DIRECTORY", default='./data/res/genomes/',
                         help="Folder containing all genbank files for use by the program as the reference genomes.")
 
-    parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./OUT-test' + '/',
+    parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./OUT' + '/',
                         help="Folder where the results will be stored.")
 
     parser.add_argument("-d", "--window", dest="window_size", metavar="INT", default=16,
@@ -42,17 +42,17 @@ def parser_code():
                         help="IslandViewer queries format, T for islandviewer format and F for normal gbk file.")
 
     parser.add_argument("-min_genomes", "--min_genomes_per_block", dest="min_genomes_per_block", metavar="INT",
-                        default=8,
+                        default=4,
                         help="Minimum genome in a gene-block.")
 
     parser.add_argument("-min_genes", "--min_genes_per_interval", dest="min_genes_per_interval", metavar="INT",
-                        default=4,
+                        default=3,
                         help="Minimum genes in a gene interval.")
 
     parser.add_argument("-rank", "--min_rank", dest="min_rank", metavar="INT", default=20,
                         help="Ranking score threshold")
 
-    parser.add_argument("-e", "--e-val", dest="e_value", metavar="FLOAT", default='0.0001',
+    parser.add_argument("-e", "--e-val", dest="e_value", metavar="FLOAT", default='0.01',
                         help="E-value threshold for the BLAST search.")
     return parser.parse_args()
 
@@ -219,21 +219,28 @@ def main():
     with open(outfolder + 'queries.json', 'w') as outfile1:
         json.dump(query_json, outfile1)
 
-    with open(outfolder + 'queries_csv_file.csv','w') as queries_csv_file:
+    with open(outfolder + 'centroid_genomes_summary.csv','w') as queries_csv_file:
         queries_csv_writer = csv.writer(queries_csv_file)
-        queries_csv_writer.writerow(['Accession Number','Description','Number of islands','Length'])
-        queries_csv_writer.writerow([query_json[0]['accession'],query_json[0]['description'],query_json[0]['num_of_islands'],query_json[0]['length']])
-        queries_csv_writer.writerow(['Islands'])
-        queries_csv_writer.writerow(['Start','End','Length', 'Number of Genes'])
-        for query in query_json[0]['islands']:
-            queries_csv_writer.writerow([query['start'],query['end'],query['length'],query['num_of_genes']])
+        if island_viewer_format:
+            for q in query_json:
+                queries_csv_writer.writerow(['Accession Number','Description','Number of islands','Length'])
+                queries_csv_writer.writerow([q['accession'],q['description'],q['num_of_islands'],q['length']])
+                queries_csv_writer.writerow(['Islands'])
+                queries_csv_writer.writerow(['Start','End','Length', 'Number of Genes'])
+                for query in q['islands']:
+                    queries_csv_writer.writerow([query['start'],query['end'],query['length'],query['num_of_genes']])
+                queries_csv_writer.writerow([])
+        else :
+            queries_csv_writer.writerow(['Organism','Accession Number','Description','Number of genes','Length'])
+            for q in query_json:
+                queries_csv_writer.writerow([q['organism'],q['accession'],q['description'],q['number_of_genes'],q['length']])
 
     target_json = parse_input.parse_gbk(db_folder, ref_fasta_dir, "NONE", True, True)
 
     with open(outfolder + 'targets.json', 'w') as outfile1:
         json.dump(target_json, outfile1)
 
-    with open(outfolder + 'targets_csv_file.csv','w') as queries_csv_file:
+    with open(outfolder + 'targets_summary.csv','w') as queries_csv_file:
         queries_csv_writer = csv.writer(queries_csv_file)
         queries_csv_writer.writerow(['Accession Number','Specie','Description','Length','Number of Genes'])
         for target in target_json:
@@ -337,11 +344,14 @@ def main():
     with open(outfolder + 'general_results.csv','w') as general_results_csv_file:
         general_results_csv_writer = csv.writer(general_results_csv_file)
         general_results_csv_writer.writerow(['Arguments'])
-        general_results_csv_writer.writerow(["Windodw's Size",window_size,"Minimum Number of Genes per Interval",min_genes_per_interval,"Minimum Number of Genomes per Block", min_genomes_per_block, "Ranking Score Threshold", min_rank, "E-value Threshold", e_val])
+        general_results_csv_writer.writerow(["Window's Size",window_size,"Minimum Number of Genes per Interval",min_genes_per_interval,"Minimum Number of Genomes per Block", min_genomes_per_block, "Ranking Score Threshold", min_rank, "E-value Threshold", e_val])
         general_results_csv_writer.writerow([' '])
-        general_results_csv_writer.writerow(['Accession Number- Start of Island - End of Island','Max Ranking Score','Number of Cliques','Number of Blocks','Avg Blocks per Clique','Context Switch'])
+        if island_viewer_format:
+            general_results_csv_writer.writerow(['Accession Number- Start of Island - End of Island','Max Ranking Score','Number of Cliques','Number of Blocks','Avg Blocks per Clique','Context Switch'])
+        else:
+            general_results_csv_writer.writerow(['Accession Number','Max Ranking Score','Number of Cliques','Number of Blocks','Avg Blocks per Clique','Context Switch'])
         for result in general_stats:
-            general_results_csv_writer.writerow([result['accession'],result['max_pval'],result['num_of_cliques'],result['numOfBlocks'],result['avgBlockPerClique'],result['context_switch']])
+            general_results_csv_writer.writerow([result['accession'],result['max_ranking_score'],result['num_of_cliques'],result['numOfBlocks'],result['avgBlockPerClique'],result['context_switch']])
 
     for root, dirs, files in os.walk(outfolder):
         for file in files:

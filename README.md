@@ -44,8 +44,51 @@ Example: inside ```/db``` there is ```/db/specie1``` folder which contains ```sp
         - ```specie1.csv```contains the information of all the islands that were predicted in *specie1*.
     2.  **Genebank format (gbk)** : the folder contains the gbk files of all the centroid queries.
 
-## Results Format
----
+## Output
+Our program output a directory with the following files:
+1. ```targets_file.csv```: csv file which contains information about the target/refernece genomes that were given as an input.
+2. ```centroid_genome_file.csv```: csv file which contains information about the centroid genome that was given as an input.
+3. ```general_results.csv```: csv file which contains a breif summary of the results. For each centroid genomes who got at least one **gene block** it displays the following information: it's top **gene block's** ranking score, number of cliques, number of gene blocks and an avarage number of gene block per clique.
+4. Result's directory for each centroid genome, it contains two files:
+    1.```***centroid_genome_name***_info_file.csv```: this file holds information about all the genes in the centroid genome.
+    2.```***centroid_genome_name***_results_file.csv```: this file show an extensive report for the algorithm results for this centroid genome. The results **gene blocks** are divided into **cliques**. ***Example***:
+```
+Clique Number	1								
+ 									
+Block Number	1	
+Ranking Score	175.6785691449	
+Number of Genes from the Query genome	4	
+Number of Intervals from the Target genomes	30		
+ 									
+Group A (genes)							
+Gene Number|Start|End|Gene Id|Gene Name|Attribute|Strand|			
+1|001|200|g1|ID_001|att1|-1|	
+2|201|500|g2|ID_002|att2|1|
+3|505|800|g3|ID_003|att3|-1|
+ 									
+Group B (Genes Intervals)								
+
+Interval 1
+Specie              genome1	
+Strain	            NC_00001	
+Number of Genes	    3
+
+Gene Number|Start|End|Gene Id|Gene Name|Attribute|Strand|Target Gene Id|Target Gene Attribute|Blast E-value|
+1|500|700|g1|ID_001|att1|-1|g57|att80|0.001|
+2|701|1000|g2|ID_002|att2|1|g58|att73|1e-10|
+3|1005|1300|g3|ID_003|att3|1|g59|att22|7e-100|
+
+Interval 2
+Specie              genome2
+Strain	            NC_00002	
+Number of Genes	    4
+
+Gene Number|Start|End|Gene Id|Gene Name|Attribute|Strand|Target Gene Id|Target Gene Attribute|Blast E-value|
+3|2200|2495|g3|ID_003|att3|1|g120|att80|0.001|
+2|2496|2795|g2|ID_002|att2|1|g121|att73|1e-10|
+1|2796|2996|g1|ID_001|att1|1|g122|att22|7e-100|
+1|2997|3117|g1|ID_001|att1|1|g123|att22|7e-100|
+```
 ## Contact
 
 - Voice: 00972-524541543
