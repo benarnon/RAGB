@@ -52,6 +52,8 @@ Our program output a directory with the following files:
 4. Result's directory for each centroid genome, it contains two files:
     1.```***centroid_genome_name***_info_file.csv```: this file holds information about all the genes in the centroid genome.
     2.```***centroid_genome_name***_results_file.csv```: this file show an extensive report for the algorithm results for this centroid genome. The results **gene blocks** are divided into **cliques**. ***Example***:
+
+    
 ```
 Clique Number	1								
  									

@@ -658,12 +658,13 @@ class BlockGraph(object):
                 block_index = 1
                 for block in clique['Blocks']:
                     results_csv_writer.writerow([' '])
-                    results_csv_writer.writerow(['Block Number', block_index, 'Ranking Score', block['ranking_scoreue'],
-                                                 'Number of Genes from the Query genome', str(len(block['A'])),
-                                                 'Number of Intervals from the Target genomes', str(len(block['B']))])
+                    results_csv_writer.writerow(['Block Number', block_index])
+                    results_csv_writer.writerow(['Ranking Score', block['ranking_scoreue']])
+                    results_csv_writer.writerow(['Number of Genes from the Query genome', str(len(block['A']))])
+                    results_csv_writer.writerow(['Number of Intervals from the Target genomes', str(len(block['B']))])
                     block_index += 1
                     results_csv_writer.writerow([' '])
-                    results_csv_writer.writerow(['Group A'])
+                    results_csv_writer.writerow(['Group A (genes)'])
                     results_csv_writer.writerow(
                         ['Gene Number', 'Start', 'End', 'Gene Id', 'Gene Name', 'Attribute', 'Strand'])
                     for gene in block['A']:
@@ -671,12 +672,13 @@ class BlockGraph(object):
                             [gene['id'] + 1, gene['start'], gene['stop'], gene['gene_id'], gene['name'],
                              gene['attribute'], gene['strand']])
                     results_csv_writer.writerow([' '])
-                    results_csv_writer.writerow(['Group B'])
-                    for gene_interval in block['B']:
+                    results_csv_writer.writerow(['Group B (Genes Intervals'])
+                    for index, gene_interval in enumerate(block['B']):
                         results_csv_writer.writerow([' '])
-                        results_csv_writer.writerow(
-                            ['Specie', gene_interval['organism'], 'Strain', gene_interval['strain'], 'Number of Genes',
-                             gene_interval['numOfGenes']])
+                        results_csv_writer.writerow(['Interval' + str(index + 1)])
+                        results_csv_writer.writerow(['Organism', gene_interval['organism']])
+                        results_csv_writer.writerow(['Strain', gene_interval['strain']])
+                        results_csv_writer.writerow(['Number of Genes',gene_interval['numOfGenes']])
                         results_csv_writer.writerow(
                             ['Gene Number', 'Start', 'End', 'Centroid Genome Gene Id', 'Centroid Genome Gene Name', 'Attribute', 'Strand',
                              'Target Gene Id', 'Target Gene Attribute', 'Blast E-value'])
