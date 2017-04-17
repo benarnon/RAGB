@@ -57,7 +57,7 @@ Clique Number	1
  									
 Block Number	1	
 Ranking Score	175.6785691449	
-Number of Genes from the Query genome	4
+Number of Genes from the Query genome	4		
 Number of Intervals from the Target genomes	30
  									
 Group A (genes)							
