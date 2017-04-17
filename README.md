@@ -3,8 +3,8 @@
 By Arnon Benshahar
 ---
 ## Introduction
+We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted **Reference-Anchored  Gene  Blocks(RAGB)**. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. **RAGBI** program is available open-source at https://github.com/benarnon/RAGBI and at https://www.cs.bgu.ac.il/~negevcb/RAGB/ where you can find also supplementary materials, including omitted proofs, figures and data. 
 
-We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted ***Reference-Anchored  Gene  Blocks(RAGB)***. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. ***RAGBI** program is available open-source at [https://github.com/benarnon/RAGBI] and at [https://www.cs.bgu.ac.il/~negevcb/RAGB/] where you can find also supplementary materials, including omitted proofs, figures and data. 
 ---
 
 ## Getting Started
@@ -29,7 +29,7 @@ python main.py -h usage: main.py [-q FOLDER] [-g FOLDER] [-o FOLDER] [-d INT] [-
 - **-min_genomes** : minimum number of genomes in a gene-block.
 - **-min_genes** : minimum number of genes in a gene interval.
 - **-rank** : minimum ranking score.
-- **--e** : eval for the BLAST search.
+- **-e** : eval for the BLAST search.
 
 
 ### Input Format
@@ -39,8 +39,8 @@ Example: inside ```/db``` there is ```/db/specie1``` folder which has ```specie1
 2. **Query folder:** for this folder we have two options:
     1. ***IslandViewer Format***:  this is for centroid queries that were predicted by the [IslandViewer 3 tool](http://www.pathogenomics.sfu.ca/islandviewer/browse/) as [genomic islands](https://en.wikipedia.org/wiki/Genomic_island). In this case, the folder has a subfolder for each specie that was analysed by the IslandViewer tool. Each folder has the gbk file of the specie and a CSV file which includes the details of all the islands that were predicted by the *IslandViewer* tool. 
 **Example**:  inside ```/query/specie_1``` there are two files: ```speice_1.gbk``` and ```specie_1.csv```
-        - ```speice_1.gbk``` includes all the genes in specie1 
-        - ```specie_1.csv```contains the information of all the islands that were predicted in *specie1*.
+        - ```speice_1.gbk``` includes all the genes in *specie_1*. 
+        - ```specie_1.csv```contains the information of all the islands that were predicted in *specie_1*.
     2.  **Genebank format (gbk)** : the folder contains the gbk files of all the centroid genome queries.
 
 ## Output
@@ -50,7 +50,7 @@ Our program output a directory with the following files:
 3. ```general_results.csv```: a CSV file which contains a breif summary of the results. For each centroid genomes who outputed at least one valid **gene block** it displays the following information: it's top **gene block's** ranking score, number of cliques, number of gene blocks and an avarage number of gene blocks per clique.
 4. Result's directory for each centroid genome, it contains two files:
     1.```***centroid_genome_name***_info_file.csv```: this file holds information about all the genes in the centroid genome.
-    2.```***centroid_genome_name***_results_file.csv```: this file displays an extensive report for the program results for this centroid genome. The results **gene blocks** are divided into **cliques**. ***Example***:
+    2.```***centroid_genome_name***_results_file.csv```: this file displays an extensive report for the program results of this centroid genome. The results **gene blocks** are divided into **cliques**. ***Example***:
 
 ```
 Clique Number	1								
