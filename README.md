@@ -1,10 +1,13 @@
 # RAGBI Program, 09/04/2017
 **Version 1.0.0** 
 By Arnon Benshahar
+---
+## Introduction
 
+We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted ***Reference-Anchored  Gene  Blocks(RAGB)***. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. ***RAGBI** program is available open-source at [https://github.com/benarnon/RAGBI] and at [https://www.cs.bgu.ac.il/~negevcb/RAGB/] where you can find also supplementary materials, including omitted proofs, figures and data. 
+---
 
-
-## How to execute RAGBI?
+## Getting Started
 In order to run RAGBI you need:
 
 - Python 2.7 or later
@@ -27,7 +30,7 @@ python main.py -h usage: main.py [-q FOLDER] [-g FOLDER] [-o FOLDER] [-d INT] [-
 - **-min_genes** : minimum number of genes in a gene interval.
 - **-rank** : minimum ranking score.
 - **--e** : eval for the BLAST search.
----
+
 
 ### Input Format
 Our program requires two input folders, the references folder, and the queries folder:
@@ -44,10 +47,10 @@ Example: inside ```/db``` there is ```/db/specie1``` folder which has ```specie1
 Our program output a directory with the following files:
 1. ```targets_file.csv```: a CSV file which contains information about the target/refernece genomes that were given as an input.
 2. ```centroid_genome_file.csv```: a CSV file which contains a breif information about the centroid genomes that were given as an input.
-3. ```general_results.csv```: a CSV file which contains a breif summary of the results. For each centroid genomes who got at least one valid **gene block** it displays the following information: it's top **gene block's** ranking score, number of cliques, number of gene blocks and an avarage number of gene blocks per clique.
+3. ```general_results.csv```: a CSV file which contains a breif summary of the results. For each centroid genomes who outputed at least one valid **gene block** it displays the following information: it's top **gene block's** ranking score, number of cliques, number of gene blocks and an avarage number of gene blocks per clique.
 4. Result's directory for each centroid genome, it contains two files:
     1.```***centroid_genome_name***_info_file.csv```: this file holds information about all the genes in the centroid genome.
-    2.```***centroid_genome_name***_results_file.csv```: this file show an extensive report for the program results for this centroid genome. The results **gene blocks** are divided into **cliques**. ***Example***:
+    2.```***centroid_genome_name***_results_file.csv```: this file displays an extensive report for the program results for this centroid genome. The results **gene blocks** are divided into **cliques**. ***Example***:
 
 ```
 Clique Number	1								
@@ -86,6 +89,8 @@ Gene Number|Start|End|Gene Id|Gene Name|Attribute|Strand|Target Gene Id|Target G
 1|2796|2996|g1|ID_001|att1|1|g122|att22|7e-100|
 1|2997|3117|g1|ID_001|att1|1|g123|att22|7e-100|
 ```
+---
+
 ## Contact
 
 - Voice: 00972-524541543

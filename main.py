@@ -28,7 +28,7 @@ def parser_code():
     parser.add_argument("-g", "--dbfolder", dest="dbfolder", metavar="DIRECTORY", default='./data/res/genomes/',
                         help="Folder containing all genbank files for use by the program as the reference genomes.")
 
-    parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./OUT' + '/',
+    parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./results-islandviewer-sample' + '/',
                         help="Folder where the results will be stored.")
 
     parser.add_argument("-d", "--window", dest="window_size", metavar="INT", default=12,
@@ -291,7 +291,7 @@ def main():
         logging.info( 'File Number ' + str(file_num) )
         file_num += 1
 
-        # Stage 2: run blastall with the query fasta vs the ref fastas
+        # Run blast with the query fasta vs the ref fastas
         query_file_name = file.split("/")[-1].split(".")[-2]
         blast_output = blast_results_dir + query_file_name + "/"
         logging.info("Run Blast Script on " + file)
@@ -315,10 +315,6 @@ def main():
 
         logging.info("Preforming our Biclustering Algorithm")
         file_stats = compute_bicliques.compute_bicluster(list_file_name, blast_parse_tmp, bicluster_results_tmp, db_folder, genome_size, min_genes_per_interval, min_genomes_per_block,window_size, e_val, min_rank)
-
-        # #****#
-        # file_stats = biclustering(tuple_list)
-        # #****#
 
         if not high_throughput:
             file_stats['accession'] = query_file_name
@@ -352,7 +348,7 @@ def main():
             if file.endswith('.json'):
                 os.remove(root + '/' + file)
 
-    # shutil.rmtree(tmp_dir)
+    shutil.rmtree(tmp_dir)
 
     logging.info("Run time: " + str(time.time() - start))
 

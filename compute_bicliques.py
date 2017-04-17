@@ -348,7 +348,6 @@ class BiPartiteGrpah(object):
         a_groups = []
         logging.info("Calculate Bicluster() start")
         total_subsets = calculate_subsets(len(self.A) + 1, self.E)
-        logging.info("There are " + str(len(total_subsets)))
         for indexes_subsets in total_subsets:
             round = 1
             # logging.info( "Round " + str(round) + " Number of subsets: " + str(len(indexes_subsets))
@@ -673,32 +672,21 @@ class BlockGraph(object):
                             [gene['id'] + 1, gene['start'], gene['stop'], gene['gene_id'], gene['name'],
                              gene['attribute'], gene['strand']])
                     results_csv_writer.writerow([' '])
-                    results_csv_writer.writerow(['Group B (Genes Intervals'])
+                    results_csv_writer.writerow(['Group B (Genes Intervals)'])
                     for index, gene_interval in enumerate(block['B']):
                         results_csv_writer.writerow([' '])
-                        results_csv_writer.writerow(['Interval' + str(index + 1)])
+                        results_csv_writer.writerow(['Interval ' + str(index + 1)])
                         results_csv_writer.writerow(['Organism', gene_interval['organism']])
                         results_csv_writer.writerow(['Strain', gene_interval['strain']])
                         results_csv_writer.writerow(['Number of Genes',gene_interval['numOfGenes']])
                         results_csv_writer.writerow(
-                            ['Gene Number', 'Start', 'End', 'Centroid Genome Gene Id', 'Centroid Genome Gene Name', 'Attribute', 'Strand',
+                            ['Gene Number', 'Start', 'End', 'Centroid Genome Gene Id', 'Centroid Genome Gene Name', 'Centroid Genome Attribute', 'Strand',
                              'Target Gene Id', 'Target Gene Attribute', 'Blast E-value'])
                         for gene in gene_interval['genes']:
-                            print gene
                             results_csv_writer.writerow(
                                 [gene_name_to_number[gene['name']] + 1, gene['start'], gene['stop'], gene['gene_id'],
                                  gene['name'], gene['attribute'], gene['strand'], gene['target_gene_name'],
                                  gene['target_gene_attribute'], gene['eval']])
-
-
-# def returnRecursiveDirFiles(root_dir):
-#     result = []
-#     for path, dir_name, flist in os.walk(root_dir):
-#         for f in flist:
-#             fname = os.path.join(path, f)
-#             if os.path.isfile(fname):
-#                 result.append(fname)
-#     return result
 
 
 def create_bipartite_graph(query_file, fname_list, refernce_folder):
