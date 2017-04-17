@@ -29,7 +29,7 @@ python main.py -h usage: main.py [-q FOLDER] [-g FOLDER] [-o FOLDER] [-d INT] [-
 - **-min_genomes** : minimum number of genomes in a gene-block.
 - **-min_genes** : minimum number of genes in a gene interval.
 - **-rank** : minimum ranking score.
-- **--e** : eval for the BLAST search.
+- **-e** : eval for the BLAST search.
 
 
 ### Input Format
