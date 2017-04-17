@@ -39,8 +39,8 @@ Example: inside ```/db``` there is ```/db/specie1``` folder which has ```specie1
 2. **Query folder:** for this folder we have two options:
     1. ***IslandViewer Format***:  this is for centroid queries that were predicted by the [IslandViewer 3 tool](http://www.pathogenomics.sfu.ca/islandviewer/browse/) as [genomic islands](https://en.wikipedia.org/wiki/Genomic_island). In this case, the folder has a subfolder for each specie that was analysed by the IslandViewer tool. Each folder has the gbk file of the specie and a CSV file which includes the details of all the islands that were predicted by the *IslandViewer* tool. 
 **Example**:  inside ```/query/specie_1``` there are two files: ```speice_1.gbk``` and ```specie_1.csv```
-        - ```speice_1.gbk``` includes all the genes in specie1 
-        - ```specie_1.csv```contains the information of all the islands that were predicted in *specie1*.
+        - ```speice_1.gbk``` includes all the genes in *specie_1*. 
+        - ```specie_1.csv```contains the information of all the islands that were predicted in *specie_1*.
     2.  **Genebank format (gbk)** : the folder contains the gbk files of all the centroid genome queries.
 
 ## Output
