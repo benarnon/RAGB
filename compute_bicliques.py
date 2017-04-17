@@ -348,6 +348,7 @@ class BiPartiteGrpah(object):
         a_groups = []
         logging.info("Calculate Bicluster() start")
         total_subsets = calculate_subsets(len(self.A) + 1, self.E)
+        logging.info("There are " + str(len(total_subsets)))
         for indexes_subsets in total_subsets:
             round = 1
             # logging.info( "Round " + str(round) + " Number of subsets: " + str(len(indexes_subsets))

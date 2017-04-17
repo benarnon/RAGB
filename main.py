@@ -31,7 +31,7 @@ def parser_code():
     parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./OUT' + '/',
                         help="Folder where the results will be stored.")
 
-    parser.add_argument("-d", "--window", dest="window_size", metavar="INT", default=16,
+    parser.add_argument("-d", "--window", dest="window_size", metavar="INT", default=12,
                         help="Size of our Biclustering algorithm's window")
 
     parser.add_argument("-n", "--num_proc", dest="num_proc", metavar="INT", default=os.sysconf("SC_NPROCESSORS_CONF"),
@@ -61,13 +61,13 @@ def check_options(parsed_args):
     if os.path.isdir(parsed_args.dbfolder):
         db_folder = parsed_args.dbfolder
     else:
-        logging.info( "The folder %s does not exist." % parsed_args.dbfolder)
+        logging.info("The folder %s does not exist." % parsed_args.dbfolder)
         sys.exit()
 
     if os.path.isdir(parsed_args.qfolder):
         query_folder = parsed_args.qfolder
     else:
-        logging.info( "The folder %s does not exist." % parsed_args.qfolder)
+        logging.info("The folder %s does not exist." % parsed_args.qfolder)
         sys.exit()
 
     # if the directory that the user specifies does not exist, then the program makes it for them.
@@ -90,31 +90,31 @@ def check_options(parsed_args):
     try:
         window_size = int(parsed_args.window_size)
         if window_size <= 0:
-            logging.info( "The window that you entered %s is a negative number, please enter a positive integer." % parsed_args.max_gap)
+            logging.info("The window that you entered %s is a negative number, please enter a positive integer." % parsed_args.max_gap)
             sys.exit()
         else:
             pass
-    except:
-        logging.info( "The window that you entered %s is not an integer, please enter a positive integer." % parsed_args.max_gap)
+    except Exception:
+        logging.info("The window that you entered %s is not an integer, please enter a positive integer." % parsed_args.max_gap)
         sys.exit()
 
     # validate the query input format (isalndviewer or gbk)
     if parsed_args.island_viewer_format == 'F' or parsed_args.island_viewer_format == 'T':
         island_viewer_format = (parsed_args.island_viewer_format == 'T')
     else:
-        logging.info( "T for isalndviewer format and F for normal gbk format")
+        logging.info("T for isalndviewer format and F for normal gbk format")
         sys.exit()
 
     # validate the input for the min_genomes_per_block
     try:
         min_genomes_per_block = int(parsed_args.min_genomes_per_block)
         if min_genomes_per_block <= 1:
-            logging.info( "The minimum genomes per block that you entered %s is less than 2, please enter a positive integer greater than 2." % parsed_args.max_gap)
+            logging.info("The minimum genomes per block that you entered %s is less than 2, please enter a positive integer greater than 2." % parsed_args.max_gap)
             sys.exit()
         else:
             pass
     except:
-        logging.info( "The minimum genomes per block you entered %s is not an integer, please enter a positive integer." % parsed_args.max_gap)
+        logging.info("The minimum genomes per block you entered %s is not an integer, please enter a positive integer." % parsed_args.max_gap)
         sys.exit()
 
     # validate the input for the min_genomes_per_block
@@ -154,12 +154,6 @@ def biclustering(tuple_list):
 
     logging.info( "Preforming our Biclustering Algorithm")
     return compute_bicliques.compute_bicluster(list_file_name, blast_parse_dir, bicluster_results, refernce_folder, max_genome_size, min_genes_per_interval, min_genomes_per_block,window_size, e_val, min_rank)
-
-# This method is used for throughput tests
-# def parallel_high_throughput_test(tuple_list_array):
-#     num_proc = 1
-#     pool = Pool(processes=num_proc)
-#     pool.map(high_throughput_tests.compute_bicluster, tuple_list_array)
 
 
 def main():
