@@ -3,7 +3,7 @@
 By Arnon Benshahar
 ---
 ## Introduction
-We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted **Reference-Anchored  Gene  Blocks(RAGB)**. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. **RAGB** program is available open-source at https://github.com/benarnon/RAGB and at https://www.cs.bgu.ac.il/~negevcb/RAGB/ where you can find also supplementary materials, including omitted proofs, figures and data. 
+We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted **Reference-Anchored  Gene  Blocks(RAGB)**. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. **RAGB** program is available open-source at https://github.com/benarnon/RAGB and at https://www.cs.bgu.ac.il/~negevcb/RAGB/ where you can find also executable file, supplementary materials, including omitted proofs, figures and data. 
 
 ---
 
@@ -13,7 +13,7 @@ In order to run RAGB you need:
 
 - **ncbi-blast-2.6.0+** program (please go to https://www.ncbi.nlm.nih.gov/books/NBK52640/ and follow the **downloading, configuration and execution steps**)
 
-The easiest way to run the project is to execute the executable file ***RAGB***. The defaults that are provided are sufficient to run the project with the inputs provided.
+The easiest way to run the project is to execute the executable file ***RAGB***. 
 
 ```
 ./RAGB [-q FOLDER] [-g FOLDER] [-o FOLDER] [-d INT] [-n INT] [-iv STRING] [-min_genomes INT] [-min_genes INT] [-rank INT] [-e FLOAT]
@@ -22,7 +22,7 @@ The easiest way to run the project is to execute the executable file ***RAGB***.
 ### Optional Arguments:
 - **-q** : folder containing the gbk (GeneBank format) or *IslandViewer* format files (see **Input Format** section) of the centroid genome query (or queries in case of multiple runs).
 - **-g** : folder containing all target/reference gbk files.
-- **-o** : output folder, the default is ```Results```.
+- **-o** : output folder.
 - **-d** : size of the sliding window, the default is 12.
 - **-n** : number of processors that you want this script to run on. The default is every CPU that the system has.
 - **-iv** : IslandViewer queries format, T for IslandViewer format and F for normal gbk files, the default is F.
