@@ -706,7 +706,8 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
     bipartite_graph.metadata = {}
     bipartite_graph.strain_to_length = {}
     color_index = 0
-    organisms = next(os.walk('./' + refernce_folder))[1]
+    logging.info("DEBUG: refernece folder " + refernce_folder)
+    organisms = next(os.walk(refernce_folder))[1]
     organisms.sort()
     logging.info("After organisms.sort()")
     # Read the taxonomy of all the ref files
@@ -716,7 +717,7 @@ def create_bipartite_graph(query_file, fname_list, refernce_folder):
         bipartite_graph.organism_to_color[organism] = color_index
         bipartite_graph.color_to_organims[color_index] = organism
         color_index += 1
-        strainFiles = next(os.walk('./' + refernce_folder + '/' + organism))[2]
+        strainFiles = next(os.walk(refernce_folder + '/' + organism))[2]
         for strain in strainFiles:
             bipartite_graph.strain_to_organism[strain.split(".")[0]] = organism
     geneId = 0

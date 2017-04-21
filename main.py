@@ -28,7 +28,7 @@ def parser_code():
     parser.add_argument("-g", "--dbfolder", dest="dbfolder", metavar="DIRECTORY", default='./data/res/genomes/',
                         help="Folder containing all genbank files for use by the program as the reference genomes.")
 
-    parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./results-islandviewer-sample' + '/',
+    parser.add_argument("-o", "--outfolder", dest="outfolder", metavar="DIRECTORY", default='./results' + '/',
                         help="Folder where the results will be stored.")
 
     parser.add_argument("-d", "--window", dest="window_size", metavar="INT", default=12,
