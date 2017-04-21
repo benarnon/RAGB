@@ -46,12 +46,12 @@ Example: inside ```/db``` there is ```/db/specie1``` folder which has ```specie1
 
 ### Data
 We supply data so users can test **RAGB**. The data is available at https://www.cs.bgu.ac.il/~negevcb/RAGB/RAGBI/ragbi-data/.
-For the reference folder we give the ```\genomes``` directory which contain 33 GeneBank files of different species.
+For the reference folder we give the ```/genomes``` directory which contain 33 GeneBank files of different species.
 For the query folder we give a few options:
-- ```\IslandViewer_sample_data```, this folder contain 3 subfolder for 3 different species that were analysed by the IsalndViewer tool (this input is in IsalndViewer format).
-- ```\IslandViewer_full_data```, this folder contain 29 subfolder for 29 different species that were analysed by the IsalndViewer tool (this input is in IsalndViewer format).
-- ```\gbk_sample_data```, this folder contain 4 centroid genomes in gbk format (this input is in gbk format).
-- ```\gbk_full_data```, this folder contain 29 centroid genomes in gbk format (this input is in gbk format).
+- ```/IslandViewer_sample_data```, this folder contain 3 subfolder for 3 different species that were analysed by the IsalndViewer tool (this input is in IsalndViewer format).
+- ```/IslandViewer_full_data```, this folder contain 29 subfolder for 29 different species that were analysed by the IsalndViewer tool (this input is in IsalndViewer format).
+- ```/gbk_sample_data```, this folder contain 4 centroid genomes in gbk format (this input is in gbk format).
+- ```/gbk_full_data```, this folder contain 29 centroid genomes in gbk format (this input is in gbk format).
 
 
 ## Output
