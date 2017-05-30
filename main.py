@@ -38,7 +38,7 @@ def parser_code():
                         type=int,
                         help="Number of processors that you want this script to run on. The default is every CPU that the system has.")
 
-    parser.add_argument("-iv", "--island_viewer_format", dest="island_viewer_format", metavar="STRING", default='T',
+    parser.add_argument("-iv", "--island_viewer_format", dest="island_viewer_format", metavar="STRING", default='F',
                         help="IslandViewer queries format, T for islandviewer format and F for normal gbk file.")
 
     parser.add_argument("-min_genomes", "--min_genomes_per_block", dest="min_genomes_per_block", metavar="INT",
