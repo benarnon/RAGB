@@ -3,7 +3,7 @@
 By Arnon Benshahar
 ---
 ## Introduction
-We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted **Reference-Anchored  Gene  Blocks(RAGB)**. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. **RAGB** program is available open-source at https://github.com/benarnon/RAGB and at https://www.cs.bgu.ac.il/~negevcb/RAGB/ where you can find also executable file, supplementary materials, including omitted proofs, figures and data. 
+We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted **Reference-Anchored  Gene  Blocks(RAGB)**. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. **RAGB** program is available open-source at https://github.com/benarnon/RAGB and at https://www.cs.bgu.ac.il/~negevcb/RAGB/RAGB.exe where you can find also executable file, supplementary materials, including omitted proofs, figures and data. In addtion we developed a user freindly [website](http://bit.ly/2shuyzJ) where users can explore the data and the results from our article.
 
 ---
 
@@ -45,7 +45,7 @@ Example: inside ```/db``` there is ```/db/species1``` folder which has ```specie
     
 
 ### Data
-We supply data so users can test **RAGB**. The data is available at https://www.cs.bgu.ac.il/~negevcb/RAGB/RAGBI/ragbi-data/.
+We supply data so users can test **RAGB**. The data is available at https://www.cs.bgu.ac.il/~negevcb/RAGB/ragb-data/.
 For the reference folder we give the ```/genomes``` directory which contain 33 GeneBank files of different speciess.
 For the query folder we give a few options:
 - ```/IslandViewer_sample_data```, this folder contain 3 subfolder for 3 different speciess that were analysed by the IsalndViewer tool (this input is in IsalndViewer format).
