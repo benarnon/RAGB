@@ -13,7 +13,7 @@ In order to run RAGB you need:
 
 - **ncbi-blast-2.6.0+** program (please go to https://www.ncbi.nlm.nih.gov/books/NBK52640/ and follow the **downloading, configuration and execution steps**)
 
-The easiest way to run the project is to execute the executable file ***RAGB*** (https://www.cs.bgu.ac.il/~negevcb/RAGB/RAGB.exe). 
+The easiest way to run the project is to execute the executable file ***RAGB*** (RAGBI.exe)[https://www.dropbox.com/s/4lf6hl2hzbv6c19/RAGB.exe?dl=0]. 
 
 ```
 ./RAGB [-q FOLDER] [-g FOLDER] [-o FOLDER] [-d INT] [-n INT] [-iv STRING] [-min_genomes INT] [-min_genes INT] [-rank INT] [-e FLOAT]
