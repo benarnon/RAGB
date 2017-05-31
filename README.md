@@ -3,7 +3,7 @@
 By Arnon Benshahar
 ---
 ## Introduction
-We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted **Reference-Anchored  Gene  Blocks(RAGB)**. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. **RAGB** program is available open-source at https://github.com/benarnon/RAGB and at [RAGB-files](https://www.dropbox.com/sh/lugdh8x058i20q1/AABaC81eyxcdvv_oFc5ftn_Ha?dl=0) where you can find also executable file,  including omitted proofs, figures and data. In addtion we developed a user freindly [website](http://bit.ly/2shuyzJ) where users can explore the data and the results from our article.
+We  formalize  a  new  problem  variant  in  gene-block  discovery, denoted **Reference-Anchored  Gene  Blocks(RAGB)**. Given a query sequence **Q** of length **n**, representing the gene-array of a DNA element,a  window  size  bound **d** on  the  length  of  a  substring  of  interest  in **Q**, and a set of target gene sequences **T=T1...Tc**. Our objective is to identify gene-blocks in **T** that are centered in a subset **q** of co-localized genes from **Q**, and contain genomes from **T** in which the corresponding orthologs of the genes from **q** are also co-localized. **RAGB** program is available open-source at https://github.com/benarnon/RAGB and at https://www.cs.bgu.ac.il/~negevcb/RAGB/ where you can find also executable file,  including omitted proofs, figures and data. In addtion we developed a user freindly [website](http://bit.ly/2shuyzJ) where users can explore the data and the results from our article.
 
 ---
 
@@ -13,7 +13,7 @@ In order to run RAGB you need:
 
 - **ncbi-blast-2.6.0+** program (please go to https://www.ncbi.nlm.nih.gov/books/NBK52640/ and follow the **downloading, configuration and execution steps**)
 
-The easiest way to run the project is to execute the executable file [RAGBI.exe](https://www.dropbox.com/s/4lf6hl2hzbv6c19/RAGB.exe?dl=0). 
+The easiest way to run the project is to execute the executable file [RAGBI.exe]https://www.cs.bgu.ac.il/~negevcb/RAGB/RAGB.exe). 
 
 ```
 ./RAGB [-q FOLDER] [-g FOLDER] [-o FOLDER] [-d INT] [-n INT] [-iv STRING] [-min_genomes INT] [-min_genes INT] [-rank INT] [-e FLOAT]
