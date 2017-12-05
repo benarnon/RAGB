@@ -1,5 +1,7 @@
 #!/usr/bin/python
-
+# Copyright(C) 2014 David Ream
+# Released under GPL version 3 licence. http://www.gnu.org/licenses/lgpl.html
+# Do not remove this comment
 from multiprocessing import Pool
 import logging
 import time
